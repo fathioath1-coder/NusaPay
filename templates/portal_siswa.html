@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html class="light" lang="id">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{% if buku %}{{ buku.nama }} - Portal Transparansi Kas NusaPay{% elif tagihan %}{{ tagihan.judul }} - Portal Kas NusaPay{% else %}Portal Transparansi Kas - NusaPay{% endif %}</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .hover-card-effect {
+      transition: all 0.2s ease;
+    }
+    .hover-card-effect:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 82, 156, 0.1);
+    }
+  </style>
+</head>
+
+<body class="text-slate-800 antialiased min-h-screen flex flex-col font-sans bg-slate-50">
+
+  <!-- ========================================== -->
+  <!-- TOP HEADER / BRAND NAVBAR                  -->
+  <!-- ========================================== -->
+  <header class="bg-white/90 sticky top-0 z-40 border-b border-slate-200/80 px-4 sm:px-8 py-3.5 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="{{ url_for('portal_siswa') }}" class="flex items-center select-none font-bold text-2xl tracking-tight leading-none">
+          <span class="text-slate-900 font-bold -tracking-wider lowercase">nusa</span>
+          <span class="text-[#00529C] font-bold -tracking-wider lowercase">pay</span>
+          <span class="text-[10px] font-black text-slate-900 ml-0.5 -mt-2 align-top">TM</span>
+        </a>
+        <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-[#00529C] border border-blue-200">
+          <span class="material-symbols-outlined text-[14px]">vpn_key</span> 1 Token Transparansi Kas
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        {% if session.get('user_name') and session.get('user_id') %}
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100/90 border border-slate-200/80 rounded-xl text-xs text-slate-700 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+          <span class="truncate max-w-[130px]">Akun: <strong class="text-slate-900">{{ session.get('user_name') }}</strong></span>
+        </div>
+        {% endif %}
+
+        {% if session.get('user_role') == 'bendahara' or session.get('user_id') %}
+        <a href="{{ url_for('dashboard') }}"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-blue-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+          title="Buka Dashboard Bendahara">
+          <span class="material-symbols-outlined text-[16px]">dashboard</span>
+          <span class="hidden sm:inline">Dashboard</span>
+        </a>
+        {% endif %}
+
+        {% if buku or tagihan %}
+        <a href="{{ url_for('portal_siswa', ganti=1) }}"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#00529C] hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-all"
+          title="Buka pencatatan kas lainnya">
+          <span class="material-symbols-outlined text-[16px]">swap_horiz</span>
+          <span>Ganti Kas</span>
+        </a>
+        {% endif %}
+
+        {% if session.get('user_id') %}
+        <a href="{{ url_for('logout') }}"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-all"
+          title="Keluar dari akun">
+          <span class="material-symbols-outlined text-[16px]">logout</span>
+          <span>Keluar</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('portal_siswa', ganti=1) }}"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-all"
+          title="Selesai dan kembali ke Beranda">
+          <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+          <span>Selesai</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- FLASH MESSAGES -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="max-w-2xl mx-auto w-full px-4 pt-6">
+    {% for category, message in messages %}
+    <div
+      class="p-4 rounded-xl text-sm font-semibold flex items-center gap-3 shadow-sm border {% if category == 'danger' %}bg-rose-50 text-rose-700 border-rose-200{% elif category == 'warning' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-emerald-50 text-emerald-800 border-emerald-200{% endif %}">
+      <span class="material-symbols-outlined text-xl shrink-0">
+        {% if category == 'danger' %}error{% elif category == 'warning' %}warning{% else %}check_circle{% endif %}
+      </span>
+      <p class="flex-1">{{ message }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- ========================================== -->
+  <!-- MAIN CONTENT CONTAINER                    -->
+  <!-- ========================================== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
+
+    {% if not (buku or tagihan) %}
+    <!-- ======================================================== -->
+    <!-- SCREEN 1: INPUT TOKEN ONLY PENCATATAN KAS                -->
+    <!-- ======================================================== -->
+    <div class="max-w-md mx-auto my-12 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-xl text-center relative overflow-hidden">
+      <!-- Decorative Top Gradient Line -->
+      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#00529C] via-[#0073CF] to-[#00A3E0]"></div>
+
+      <!-- Icon -->
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-[#00529C] to-[#0073CF] flex items-center justify-center text-white shadow-lg shadow-blue-700/20">
+        <span class="material-symbols-outlined text-3xl">vpn_key</span>
+      </div>
+
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-[#00529C] border border-blue-200 mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#0066C0] animate-pulse"></span>
+        <span>Portal Transparansi Kas Siswa</span>
+      </div>
+
+      <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Masukkan Token Kas Anda</h2>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+        Siswa atau anggota kas cukup memasukkan Token Kas yang diberikan oleh bendahara untuk melihat rincian kas &amp; riwayat pembayaran tanpa perlu akun.
+      </p>
+
+      <form action="{{ url_for('cek_tagihan') }}" method="POST" class="mt-6 space-y-4 text-left">
+        <div>
+          <label for="tokenInput" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+            Token Kas (Token Only)
+          </label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xl">vpn_key</span>
+            <input type="text" id="tokenInput" name="token" required autofocus
+              value="{{ entered_token or '' }}"
+              placeholder=""
+              class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-base font-bold text-slate-900 uppercase placeholder:normal-case placeholder:font-sans placeholder:font-normal focus:bg-white focus:border-[#00529C] focus:ring-2 focus:ring-[#00529C]/15 transition-all"
+              oninput="this.value = this.value.toUpperCase()">
+          </div>
+        </div>
+
+        <button type="submit"
+          class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#00529C] to-[#0073CF] hover:from-[#004280] hover:to-[#005ea8] text-white font-bold text-sm tracking-wide shadow-md shadow-blue-700/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 mt-2">
+          <span>Lihat Tagihan Kas</span>
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-5 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400">
+        <span class="material-symbols-outlined text-[16px] text-emerald-600">verified</span>
+        <span>Akses Kas Terverifikasi &amp; Aman • NusaPay</span>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- ======================================================== -->
+    <!-- SCREEN 2: PORTAL DATA AKTIF SESUAI TOKEN WORKSPACE       -->
+    <!-- ======================================================== -->
+
+    <!-- HERO BANNER WORKSPACE PENCATATAN -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#003B73] via-[#00529C] to-[#0073CF] text-white shadow-xl p-6 sm:p-8">
+      <div class="absolute -right-16 -top-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-16 -bottom-16 w-64 h-64 bg-sky-400/10 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="space-y-2">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-white/15 border border-white/25 backdrop-blur-sm">
+            <span class="material-symbols-outlined text-[15px] text-yellow-300">verified</span>
+            <span>1 Token Transparansi: {{ buku.nama if buku else 'Kas Organisasi' }}</span>
+          </div>
+
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{{ buku.nama if buku else (tagihan.judul if tagihan else 'Portal Kas') }}</h1>
+          
+          <div class="flex items-center gap-4 text-xs text-blue-100 flex-wrap pt-1">
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">person</span>
+              Bendahara: <b class="text-white">{{ bendahara.full_name if bendahara else 'Bendahara' }}</b>
+            </span>
+            {% if tagihan and tagihan.jatuh_tempo %}
+            <span class="opacity-40">•</span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">calendar_month</span>
+              Jatuh Tempo: <b class="text-white">{{ tagihan.jatuh_tempo.strftime('%d %B %Y') }}</b>
+            </span>
+            {% endif %}
+            <span class="opacity-40">•</span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">category</span>
+              {{ tagihan.kategori if (tagihan and tagihan.kategori) else 'Pencatatan Kas' }}
+            </span>
+          </div>
+
+          {% if tagihan and tagihan.catatan %}
+          <p class="text-xs text-blue-100/90 bg-white/10 px-3.5 py-2 rounded-xl border border-white/15 max-w-2xl mt-2 leading-relaxed">
+            <span class="font-semibold text-white">Catatan:</span> {{ tagihan.catatan }}
+          </p>
+          {% elif buku and buku.deskripsi %}
+          <p class="text-xs text-blue-100/90 bg-white/10 px-3.5 py-2 rounded-xl border border-white/15 max-w-2xl mt-2 leading-relaxed">
+            <span class="font-semibold text-white">Keterangan:</span> {{ buku.deskripsi }}
+          </p>
+          {% endif %}
+        </div>
+
+        <div class="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 shrink-0 w-full md:w-auto">
+          <!-- Token Badge -->
+          <div class="bg-white/10 border border-white/25 backdrop-blur-md px-4 py-2 rounded-xl flex items-center gap-3">
+            <span class="text-xs text-blue-200">Token Pencatatan:</span>
+            <span class="font-mono text-base font-bold text-yellow-300">{{ token }}</span>
+            <button type="button" onclick="navigator.clipboard.writeText('{{ token }}'); alert('Token disalin: {{ token }}')"
+              class="text-blue-200 hover:text-white p-1" title="Salin Token">
+              <span class="material-symbols-outlined text-[16px]">content_copy</span>
+            </button>
+          </div>
+
+          <!-- Bayar via QRIS Button -->
+          <button type="button" onclick="openModalQris()"
+            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-[#00529C] hover:bg-blue-50 text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">qr_code_scanner</span>
+            <span>Bayar Kas via QRIS</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 METRIC STATS CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 1. Nominal Per Siswa -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-3">
+          <div class="w-10 h-10 bg-blue-50 text-[#00529C] rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">payments</span>
+          </div>
+          <span class="text-xs text-[#00529C] bg-blue-50 px-2.5 py-1 rounded-lg font-bold border border-blue-100">
+            Per Siswa
+          </span>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500 mb-1">Besaran Iuran</p>
+          <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Rp {{ "{:,.0f}".format(tagihan.nominal|default(0)).replace(',', '.') }}</h3>
+          <p class="text-xs text-slate-400 mt-1">Kewajiban kas per anggota</p>
+        </div>
+      </div>
+
+      <!-- 2. Siswa Sudah Bayar / Lunas -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-3">
+          <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">check_circle</span>
+          </div>
+          <span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold border border-emerald-200">
+            Lunas
+          </span>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500 mb-1">Sudah Membayar</p>
+          <h3 class="text-2xl font-bold text-emerald-600 tracking-tight">{{ total_lunas }} Siswa</h3>
+          <p class="text-xs text-slate-400 mt-1">Dari total {{ total_siswa }} siswa</p>
+        </div>
+      </div>
+
+      <!-- 3. Siswa Belum Bayar -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-3">
+          <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">pending</span>
+          </div>
+          <span class="text-xs text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg font-bold border border-rose-200">
+            Belum Lunas
+          </span>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500 mb-1">Belum Membayar</p>
+          <h3 class="text-2xl font-bold text-rose-600 tracking-tight">{{ total_belum_lunas }} Siswa</h3>
+          <p class="text-xs text-slate-400 mt-1">Harap segera melunasi iuran</p>
+        </div>
+      </div>
+
+      <!-- 4. Kas Terkumpul -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+        <div class="flex justify-between items-start mb-3">
+          <div class="w-10 h-10 bg-sky-50 text-[#0066C0] rounded-xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+          </div>
+          <span class="text-xs text-[#0066C0] bg-sky-50 px-2.5 py-1 rounded-lg font-bold border border-sky-100">
+            {{ persen_tercapai }}% Terkumpul
+          </span>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-500 mb-1">Total Kas Terkumpul</p>
+          <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Rp {{ "{:,.0f}".format(total_terkumpul).replace(',', '.') }}</h3>
+          <p class="text-xs text-slate-400 mt-1">Target: Rp {{ "{:,.0f}".format(total_target).replace(',', '.') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS NAVIGATION: 1. DAFTAR PEMBAYARAN SISWA | 2. TRANSPARANSI PENGELUARAN KAS -->
+    <div class="flex items-center gap-2 border-b border-slate-200">
+      <button type="button" id="tabBtnSiswa" onclick="switchMainTab('siswa')"
+        class="pb-3 px-4 text-sm font-bold border-b-2 border-[#00529C] text-[#00529C] flex items-center gap-2 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-lg">format_list_bulleted</span>
+        <span>Daftar Pembayaran Siswa</span>
+        <span class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-[#00529C]">{{ total_siswa }}</span>
+      </button>
+
+      <button type="button" id="tabBtnPengeluaran" onclick="switchMainTab('pengeluaran')"
+        class="pb-3 px-4 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-lg">receipt_long</span>
+        <span>Pencatatan Pengeluaran Kas</span>
+        <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">{{ pengeluaran_list|length }}</span>
+      </button>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 1 CONTENT: DAFTAR NAMA SISWA SUDAH & BELUM BAYAR     -->
+    <!-- ======================================================== -->
+    <div id="tabContentSiswa" class="space-y-4">
+      
+      <!-- Toolbar Filter & Search -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <!-- Search bar -->
+        <div class="relative flex-1 min-w-[220px]">
+          <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+          <input type="text" id="inputSearchSiswa" onkeyup="filterSiswaTable()"
+            placeholder="Cari nama siswa..."
+            class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#00529C] focus:outline-none transition-all">
+        </div>
+
+        <!-- Filter Status Buttons -->
+        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl shrink-0">
+          <button type="button" onclick="setFilterCategory('all')" id="filterBtnAll"
+            class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-900 shadow-sm transition-all cursor-pointer">
+            Semua ({{ total_siswa }})
+          </button>
+          <button type="button" onclick="setFilterCategory('lunas')" id="filterBtnLunas"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">
+            Sudah Bayar ({{ total_lunas }})
+          </button>
+          <button type="button" onclick="setFilterCategory('belum')" id="filterBtnBelum"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">
+            Belum Bayar ({{ total_belum_lunas }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Students Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm" id="tableSiswa">
+            <thead class="bg-slate-50/80 border-b border-slate-200/70 text-slate-500 font-bold uppercase tracking-wider text-xs">
+              <tr>
+                <th class="py-3.5 px-4 w-12 text-center">No</th>
+                <th class="py-3.5 px-4">Nama Siswa</th>
+                <th class="py-3.5 px-4">Kelas</th>
+                <th class="py-3.5 px-4">Status</th>
+                <th class="py-3.5 px-4">Total Tagihan</th>
+                <th class="py-3.5 px-4">Sudah Bayar</th>
+                <th class="py-3.5 px-4">Sisa Bayar</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% if siswa_list %}
+              {% for s in siswa_list %}
+              <tr class="hover:bg-slate-50/60 transition-colors row-siswa"
+                  data-nama="{{ s.nama|lower }}"
+                  data-status="{{ 'lunas' if s.is_lunas else 'belum' }}">
+                <td class="py-3.5 px-4 text-center text-xs text-slate-400 font-mono">{{ loop.index }}</td>
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-[#00529C] font-bold text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                      {{ s.inisial }}
+                    </div>
+                    <div>
+                      <p class="font-bold text-slate-900 leading-tight">{{ s.nama }}</p>
+                      {% if s.nis %}<span class="text-[11px] font-mono text-slate-400">{{ s.nis }}</span>{% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 text-xs text-slate-600 font-medium">{{ s.kelas }}</td>
+                <td class="py-3.5 px-4">
+                  {% if s.is_lunas %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Sudah Bayar / Lunas</span>
+                  </span>
+                  {% else %}
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span>Belum Lunas</span>
+                  </span>
+                  {% endif %}
+                </td>
+                <td class="py-3.5 px-4 font-semibold text-slate-700">
+                  Rp {{ "{:,.0f}".format(s.tagihan|default(0)).replace(',', '.') }}
+                </td>
+                <td class="py-3.5 px-4 font-bold text-emerald-600">
+                  Rp {{ "{:,.0f}".format(s.sudah_bayar|default(0)).replace(',', '.') }}
+                </td>
+                <td class="py-3.5 px-4 font-bold {% if s.sisa > 0 %}text-rose-600{% else %}text-slate-400{% endif %}">
+                  Rp {{ "{:,.0f}".format(s.sisa|default(0)).replace(',', '.') }}
+                </td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
+                  Belum ada data siswa yang tercatat pada pencatatan kas ini.
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2 CONTENT: PENCATATAN PENGELUARAN KAS (TRANSPARANSI) -->
+    <!-- ======================================================== -->
+    <div id="tabContentPengeluaran" class="space-y-4 hidden">
+      
+      <!-- Ringkasan Arus Kas -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Total Kas Masuk</span>
+            <span class="text-xl font-bold text-emerald-600 font-mono">Rp {{ "{:,.0f}".format(total_kas_masuk|default(0)).replace(',', '.') }}</span>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <span class="material-symbols-outlined">trending_up</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Total Pengeluaran Kas</span>
+            <span class="text-xl font-bold text-rose-600 font-mono">Rp {{ "{:,.0f}".format(total_pengeluaran|default(0)).replace(',', '.') }}</span>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <span class="material-symbols-outlined">trending_down</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">Sisa Saldo Kas Aktif</span>
+            <span class="text-xl font-bold text-[#00529C] font-mono">Rp {{ "{:,.0f}".format(saldo_kas|default(0)).replace(',', '.') }}</span>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-[#00529C] flex items-center justify-center">
+            <span class="material-symbols-outlined">account_balance</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabel Pengeluaran -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">Rincian Pengeluaran Kas</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Seluruh catatan pengeluaran kas yang dibukukan oleh bendahara</p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-600">
+            {{ pengeluaran_list|length }} Catatan
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-50/80 border-b border-slate-200/70 text-slate-500 font-bold uppercase tracking-wider text-xs">
+              <tr>
+                <th class="py-3.5 px-4 w-12 text-center">No</th>
+                <th class="py-3.5 px-4">Tanggal</th>
+                <th class="py-3.5 px-4">Keperluan / Keterangan</th>
+                <th class="py-3.5 px-4">Kategori</th>
+                <th class="py-3.5 px-4 text-right">Nominal Pengeluaran</th>
+                <th class="py-3.5 px-4 text-center">Bukti Nota</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% if pengeluaran_list %}
+              {% for p in pengeluaran_list %}
+              <tr class="hover:bg-slate-50/60 transition-colors">
+                <td class="py-3.5 px-4 text-center text-xs text-slate-400 font-mono">{{ loop.index }}</td>
+                <td class="py-3.5 px-4 font-mono text-xs text-slate-600 whitespace-nowrap">
+                  {{ p.tanggal.strftime('%d %b %Y') if p.tanggal else '-' }}
+                </td>
+                <td class="py-3.5 px-4">
+                  <p class="font-bold text-slate-900 leading-snug">{{ p.keterangan }}</p>
+                  {% if p.catatan %}<p class="text-xs text-slate-500 mt-0.5">{{ p.catatan }}</p>{% endif %}
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium text-xs">
+                    {{ p.kategori }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-bold text-rose-600 text-right font-mono whitespace-nowrap">
+                  - Rp {{ "{:,.0f}".format(p.nominal|default(0)).replace(',', '.') }}
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                  {% if p.bukti_nota %}
+                  <a href="{{ url_for('static', filename='uploads/' + p.bukti_nota) }}" target="_blank"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#00529C] bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">receipt</span>
+                    <span>Lihat</span>
+                  </a>
+                  {% else %}
+                  <span class="text-xs text-slate-400">-</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="6" class="py-12 text-center text-slate-400 text-sm">
+                  Belum ada catatan pengeluaran kas yang tercatat.
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL QRIS PEMBAYARAN KAS                  -->
+  <!-- ========================================== -->
+  <div id="modalQrisBackdrop"
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    onclick="if(event.target === this) closeModalQris()">
+    <div id="modalQrisContent"
+      class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 scale-95 p-6 text-center"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-xl text-[#00529C]">qr_code_2</span>
+          <h3 class="text-base font-bold text-slate-800">QRIS Pembayaran Kas</h3>
+        </div>
+        <button type="button" onclick="closeModalQris()" class="text-slate-400 hover:text-slate-600 rounded-lg p-1">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+
+      {% if bendahara and bendahara.qris_path %}
+      <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 mb-4 flex flex-col items-center justify-center">
+        <img src="{{ url_for('static', filename='uploads/' + bendahara.qris_path) }}"
+          alt="QRIS Kas" class="w-52 h-52 rounded-xl shadow-sm border border-white object-contain">
+        <span class="text-[11px] text-slate-400 mt-3 font-medium">Silakan scan kode QRIS untuk pembayaran</span>
+      </div>
+
+      <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+        Silakan transfer sesuai nominal kas lalu kirimkan konfirmasi/bukti transfer ke Bendahara <b>({{ bendahara.full_name }})</b> agar dicatat ke sistem.
+      </p>
+      {% else %}
+      <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 mb-4 flex flex-col items-center justify-center py-8">
+        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">image_not_supported</span>
+        <h4 class="text-sm font-bold text-slate-700">QRIS Belum Diunggah</h4>
+        <p class="text-xs text-slate-500 text-center mt-1">Bendahara belum mengunggah barcode QRIS. Silakan hubungi bendahara secara langsung untuk setoran kas.</p>
+      </div>
+      {% endif %}
+
+      <button type="button" onclick="closeModalQris()"
+        class="w-full py-2.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer">
+        Tutup
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT LOGIC                           -->
+  <!-- ========================================== -->
+  <script>
+    // Tab Switcher
+    function switchMainTab(tab) {
+      const contentSiswa = document.getElementById('tabContentSiswa');
+      const contentPengeluaran = document.getElementById('tabContentPengeluaran');
+      const btnSiswa = document.getElementById('tabBtnSiswa');
+      const btnPengeluaran = document.getElementById('tabBtnPengeluaran');
+
+      if (!contentSiswa || !contentPengeluaran) return;
+
+      if (tab === 'siswa') {
+        contentSiswa.classList.remove('hidden');
+        contentPengeluaran.classList.add('hidden');
+        btnSiswa.classList.add('border-[#00529C]', 'text-[#00529C]', 'font-bold');
+        btnSiswa.classList.remove('border-transparent', 'text-slate-500');
+        btnPengeluaran.classList.remove('border-[#00529C]', 'text-[#00529C]', 'font-bold');
+        btnPengeluaran.classList.add('border-transparent', 'text-slate-500');
+      } else {
+        contentPengeluaran.classList.remove('hidden');
+        contentSiswa.classList.add('hidden');
+        btnPengeluaran.classList.add('border-[#00529C]', 'text-[#00529C]', 'font-bold');
+        btnPengeluaran.classList.remove('border-transparent', 'text-slate-500');
+        btnSiswa.classList.remove('border-[#00529C]', 'text-[#00529C]', 'font-bold');
+        btnSiswa.classList.add('border-transparent', 'text-slate-500');
+      }
+    }
+
+    // Filter Category (Semua / Lunas / Belum Lunas)
+    let currentCategory = 'all';
+
+    function setFilterCategory(cat) {
+      currentCategory = cat;
+
+      const btnAll = document.getElementById('filterBtnAll');
+      const btnLunas = document.getElementById('filterBtnLunas');
+      const btnBelum = document.getElementById('filterBtnBelum');
+
+      [btnAll, btnLunas, btnBelum].forEach(b => {
+        if (b) {
+          b.classList.remove('bg-white', 'text-slate-900', 'shadow-sm', 'font-bold');
+          b.classList.add('text-slate-600', 'font-medium');
+        }
+      });
+
+      if (cat === 'all' && btnAll) {
+        btnAll.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'font-bold');
+        btnAll.classList.remove('text-slate-600', 'font-medium');
+      } else if (cat === 'lunas' && btnLunas) {
+        btnLunas.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'font-bold');
+        btnLunas.classList.remove('text-slate-600', 'font-medium');
+      } else if (cat === 'belum' && btnBelum) {
+        btnBelum.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'font-bold');
+        btnBelum.classList.remove('text-slate-600', 'font-medium');
+      }
+
+      filterSiswaTable();
+    }
+
+    // Filter Search + Category on Students Table
+    function filterSiswaTable() {
+      const input = document.getElementById('inputSearchSiswa');
+      const query = input ? input.value.toLowerCase().trim() : '';
+      const rows = document.querySelectorAll('.row-siswa');
+
+      rows.forEach(r => {
+        const nama = r.getAttribute('data-nama') || '';
+        const status = r.getAttribute('data-status') || '';
+
+        const matchQuery = !query || nama.includes(query);
+        const matchCategory = (currentCategory === 'all') || (status === currentCategory);
+
+        if (matchQuery && matchCategory) {
+          r.style.display = '';
+        } else {
+          r.style.display = 'none';
+        }
+      });
+    }
+
+    // Modal QRIS
+    function openModalQris() {
+      const b = document.getElementById('modalQrisBackdrop');
+      const c = document.getElementById('modalQrisContent');
+      if (!b || !c) return;
+      b.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+      b.classList.add('opacity-100', 'pointer-events-auto');
+      c.classList.remove('scale-95');
+      c.classList.add('scale-100');
+    }
+
+    function closeModalQris() {
+      const b = document.getElementById('modalQrisBackdrop');
+      const c = document.getElementById('modalQrisContent');
+      if (!b || !c) return;
+      b.classList.remove('opacity-100', 'pointer-events-auto');
+      b.classList.add('opacity-0', 'pointer-events-none');
+      c.classList.remove('scale-100');
+      c.classList.add('scale-95');
+      setTimeout(() => b.classList.add('hidden'), 250);
+    }
+
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModalQris();
+    });
+  </script>
+
+</body>
+
+</html>

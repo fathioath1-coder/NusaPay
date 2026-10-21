@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html class="light" lang="id">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilih Organisasi - NusaPay</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+    rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* Full-Screen Sliding Keyframes */
+    @keyframes slideInFromLeft {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+
+    .welcome-panel-slide-in {
+      transform: translateX(0);
+      animation: slideInFromLeft 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .welcome-panel-slide-out {
+      transform: translateX(100vw) !important;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      pointer-events: none !important;
+    }
+
+    /* Checkmark Animation */
+    @keyframes drawCheckmark {
+      0% {
+        stroke-dashoffset: 24;
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes ripplePulse {
+      0% {
+        transform: scale(0.95);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.15);
+        opacity: 0.25;
+      }
+      100% {
+        transform: scale(0.95);
+        opacity: 0.7;
+      }
+    }
+
+    .welcome-checkmark-path {
+      stroke-dasharray: 24;
+      stroke-dashoffset: 24;
+      animation: drawCheckmark 0.65s cubic-bezier(0.65, 0, 0.35, 1) 0.3s forwards;
+    }
+
+    .ripple-ring {
+      animation: ripplePulse 2.8s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 relative bg-slate-50">
+
+  <!-- DECORATIVE BACKGROUND (sama seperti halaman login) -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute -top-32 -left-32 w-[550px] h-[550px] bg-sky-200/50 rounded-lg blur-[100px] orb-1"></div>
+    <div class="absolute top-1/3 -right-24 w-[500px] h-[500px] bg-brand-400/25 rounded-lg blur-[110px] orb-2"></div>
+    <div class="absolute -bottom-24 left-1/4 w-[600px] h-[600px] bg-cyan-100/60 rounded-lg blur-[120px] glow-pulse"></div>
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#0066C008_1px,transparent_1px),linear-gradient(to_bottom,#0066C008_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- FULL-SCREEN SLIDING WELCOME PANEL (myBCA BLUE & WHITE)   -->
+  <!-- ======================================================== -->
+  {% set display_name = user.full_name if (user and user.full_name) else (welcome_data.user_name if (welcome_data and welcome_data.user_name) else session.get('user_name', '')) %}
+
+  <div id="welcome-panel"
+    data-force-show="{{ 'true' if welcome_data else 'false' }}"
+    class="welcome-panel-slide-in fixed inset-0 w-screen h-screen z-50 bg-[#F8FAFC] flex flex-col items-center justify-center text-center p-6 cursor-pointer select-none overflow-hidden"
+    onclick="slideOutWelcomePanel()"
+    title="Klik untuk melanjutkan">
+
+    <!-- Inline script to prevent flash if already dismissed -->
+    <script>
+      (function() {
+        var panel = document.getElementById('welcome-panel');
+        var forceShow = panel ? panel.getAttribute('data-force-show') === 'true' : false;
+        var isPreview = new URLSearchParams(window.location.search).has('welcome');
+        try {
+          if (!forceShow && !isPreview && sessionStorage.getItem('dashboard_welcome_dismissed') === 'true') {
+            if (panel) panel.style.display = 'none';
+          }
+        } catch(e) {}
+      })();
+    </script>
+
+    <!-- Animated Checkmark Icon with Soft Glowing Halo -->
+    <div class="relative w-28 h-28 sm:w-32 sm:h-32 mb-6 flex items-center justify-center">
+      <!-- Soft Halo Glow -->
+      <div class="absolute inset-0 rounded-full bg-blue-400/20 blur-xl"></div>
+      <div class="ripple-ring absolute inset-1 rounded-full bg-blue-100/70"></div>
+      
+      <!-- Blue Circle -->
+      <div class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#0066C0] flex items-center justify-center shadow-lg shadow-blue-600/25">
+        <svg class="w-10 h-10 sm:w-12 sm:h-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path class="welcome-checkmark-path" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- App Pill Badge -->
+    <div class="inline-flex items-center px-5 py-1.5 rounded-full bg-white border border-blue-200 text-sm font-semibold text-[#0066C0] shadow-xs mb-5">
+      <span>Portal Manajemen Kas</span>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-[#0F172A] tracking-tight">
+      {% if welcome_data and welcome_data.type == 'register' %}
+      Selamat Bergabung!
+      {% else %}
+      Selamat Datang!
+      {% endif %}
+    </h1>
+
+    <!-- Display Name -->
+    {% if display_name %}
+    <p class="text-2xl sm:text-3xl font-bold text-[#0066C0] mt-3">{{ display_name }}</p>
+    {% endif %}
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- EXISTING DASHBOARD (PRESERVED IN FULL)                  -->
+  <!-- ======================================================== -->
+  <div class="max-w-4xl w-full relative z-10">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-slate-900">Halo!</h1>
+      <p class="text-slate-500 mt-2">Pilih ruang kerja organisasi atau buat pencatatan kas baru.</p>
+    </div>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="mb-6 space-y-2 max-w-lg mx-auto">
+      {% for category, message in messages %}
+      <div
+        class="p-4 rounded-xl {% if category == 'danger' %}bg-red-50 text-red-600{% else %}bg-green-50 text-green-600{% endif %} font-medium text-sm text-center shadow-sm border {% if category == 'danger' %}border-red-100{% else %}border-green-100{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- NOTIFIKASI SISWA KONFIRMASI PEMBAYARAN DARI GMAIL -->
+    {% if konfirmasi_pending_count and konfirmasi_pending_count > 0 %}
+    <div class="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-emerald-50 border border-blue-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="relative w-10 h-10 rounded-xl bg-[#00529C] text-white flex items-center justify-center shrink-0 shadow-sm">
+          <span class="material-symbols-outlined text-[22px]">notifications_active</span>
+          <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </span>
+        </div>
+        <div>
+          <p class="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <span>{{ konfirmasi_pending_count }} Siswa Mengonfirmasi Pembayaran</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#00529C] text-white">Menunggu Verifikasi</span>
+          </p>
+          <p class="text-xs text-slate-500 mt-0.5">Siswa telah merespon tagihan lewat tombol pesan Gmail. Buka halaman penagihan untuk konfirmasi & kurangi tagihan.</p>
+        </div>
+      </div>
+      <a href="{{ url_for('penagihankas') }}" class="px-4 py-2.5 rounded-xl bg-[#00529C] hover:bg-blue-700 text-white font-bold text-xs shrink-0 shadow-sm transition-all flex items-center gap-1.5">
+        <span>Buka & Verifikasi</span>
+        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+      </a>
+    </div>
+    {% endif %}
+
+    {% if not buku_list %}
+    <div class="mb-6 p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-blue-900">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-100 text-[#0066C0] flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-[22px]">add_task</span>
+        </div>
+        <div>
+          <p class="font-bold text-slate-900 text-sm">Belum Ada Pencatatan Kas</p>
+          <p class="text-slate-500 mt-0.5">Silakan buat pencatatan kas pertama Anda untuk mulai mengelola tagihan siswa dan pembukuan kas.</p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('modal-tambah-buku').classList.remove('hidden')"
+        class="shrink-0 px-4 py-2.5 bg-[#0066C0] hover:bg-sky-700 text-white font-bold rounded-xl shadow-sm transition-all cursor-pointer">
+        + Buat Pencatatan Kas
+      </button>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+      <!-- Add New -->
+      <div onclick="document.getElementById('modal-tambah-buku').classList.remove('hidden')"
+        class="bg-white border-2 border-dashed border-slate-300 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#0066C0] hover:bg-sky-50 transition-all min-h-[200px] group">
+        <div
+          class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-[#0066C0] group-hover:text-white transition-colors mb-4">
+          <span class="material-symbols-outlined text-3xl">add</span>
+        </div>
+        <h3 class="font-bold text-slate-700 group-hover:text-[#0066C0]">Buat Pencatatan Kas Baru</h3>
+        <p class="text-xs text-slate-400 mt-1">Kelola pencatatan kas organisasi Anda</p>
+      </div>
+
+      <!-- Loop Buku Kas -->
+      {% for buku in buku_list %}
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between hover:shadow-lg hover:border-[#0066C0] transition-all min-h-[200px] group relative overflow-hidden">
+        <div
+          class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-sky-100/50 to-transparent rounded-bl-full -z-0">
+        </div>
+        <div class="relative z-10 flex items-start justify-between">
+          <div class="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center text-[#0066C0]">
+            <span class="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            {% if buku.token %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-sky-50 text-[#0066C0] border border-sky-200/80 shadow-2xs" title="1 Token Pencatatan untuk Portal Siswa">
+              <span class="material-symbols-outlined text-[13px]">vpn_key</span>
+              {{ buku.token }}
+            </span>
+            {% endif %}
+            <!-- Tombol Hapus Pencatatan Kas -->
+            <button type="button" onclick="konfirmasiHapusBuku('{{ buku.id }}', '{{ buku.nama|escape }}')"
+              class="w-9 h-9 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center cursor-pointer"
+              title="Hapus pencatatan {{ buku.nama }}">
+              <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="relative z-10 my-3">
+          <h3 class="font-bold text-lg text-slate-900 group-hover:text-[#0066C0] line-clamp-1 transition-colors">{{ buku.nama }}</h3>
+          <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{ buku.deskripsi or 'Tidak ada deskripsi' }}</p>
+        </div>
+
+        <div class="relative z-10 mt-auto pt-2">
+          <a href="{{ url_for('pilih_buku_kas', buku_id=buku.id) }}"
+            class="inline-flex items-center text-sm font-semibold text-[#0066C0] hover:text-[#004d90] transition-colors">
+            <span>Buka Workspace</span>
+            <span
+              class="material-symbols-outlined ml-1 text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+
+    <div class="mt-12 text-center">
+      <a href="{{ url_for('logout') }}"
+        class="inline-flex items-center gap-2 text-rose-500 hover:text-rose-700 font-semibold px-4 py-2 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors">
+        <span class="material-symbols-outlined text-[18px]">logout</span>
+        Keluar Akun
+      </a>
+    </div>
+  </div>
+
+  <!-- Modal Tambah -->
+  <div id="modal-tambah-buku"
+    class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 hidden"
+    onclick="if(event.target === this) this.classList.add('hidden')">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-bold text-lg text-slate-900">Buat Organisasi Baru</h3>
+        <button onclick="document.getElementById('modal-tambah-buku').classList.add('hidden')"
+          class="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form action="{{ url_for('tambah_buku_kas') }}" method="POST" class="p-5 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Nama Organisasi / Kas <span
+              class="text-rose-500">*</span></label>
+          <input type="text" name="nama" required placeholder=""
+            class="w-full border-slate-200 rounded-xl focus:border-[#0066C0] focus:ring focus:ring-sky-100 px-4 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Deskripsi (Opsional)</label>
+          <textarea name="deskripsi" rows="3" placeholder=""
+            class="w-full border-slate-200 rounded-xl focus:border-[#0066C0] focus:ring focus:ring-sky-100 px-4 py-2"></textarea>
+        </div>
+        <button type="submit"
+          class="w-full py-3 bg-[#0066C0] hover:bg-sky-700 text-white font-bold rounded-xl shadow-md transition-colors mt-2">
+          Simpan & Buat
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Hapus Buku Kas -->
+  <div id="modal-hapus-buku"
+    class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 hidden"
+    onclick="if(event.target === this) closeModalHapusBuku()">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden" onclick="event.stopPropagation()">
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-rose-50/60">
+        <div class="flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">delete_forever</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-slate-900 leading-snug">Hapus Pencatatan Kas</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Konfirmasi penghapusan ruang kerja organisasi.</p>
+          </div>
+        </div>
+        <button onclick="closeModalHapusBuku()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <form id="form-hapus-buku" method="POST" action="">
+        <div class="p-6 space-y-3.5 bg-white">
+          <p class="text-sm text-slate-700 leading-relaxed">
+            Apakah Anda yakin ingin menghapus pencatatan kas <strong id="hapus-nama-buku" class="text-rose-600 font-bold">-</strong>?
+          </p>
+          <div class="p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs text-amber-800 flex items-start gap-2.5">
+            <span class="material-symbols-outlined text-[18px] text-amber-600 shrink-0 mt-0.5">warning</span>
+            <div class="space-y-1">
+              <span class="font-bold block">Peringatan:</span>
+              <p class="text-amber-700 leading-relaxed">Seluruh data siswa, tagihan, dan riwayat transaksi kas di dalam organisasi ini akan terhapus secara permanen. Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 pt-3 border-t border-slate-100 bg-white flex items-center justify-end gap-3">
+          <button type="button" onclick="closeModalHapusBuku()"
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer">
+            Batal
+          </button>
+          <button type="submit"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+            <span>Ya, Hapus Pencatatan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript for Full-Screen Slide-Out Transition -->
+  <script>
+    let isSlidingOut = false;
+
+    function slideOutWelcomePanel() {
+      if (isSlidingOut) return;
+      const panel = document.getElementById('welcome-panel');
+      if (!panel) return;
+
+      isSlidingOut = true;
+
+      // Animate sliding horizontally to the right
+      panel.classList.remove('welcome-panel-slide-in');
+      panel.classList.add('welcome-panel-slide-out');
+
+      try {
+        sessionStorage.setItem('dashboard_welcome_dismissed', 'true');
+      } catch (e) {}
+
+      // Once animation completes, completely hide the panel and restore full dashboard interactivity
+      setTimeout(() => {
+        panel.style.display = 'none';
+      }, 680);
+    }
+
+    function konfirmasiHapusBuku(bukuId, bukuNama) {
+      const modal = document.getElementById('modal-hapus-buku');
+      const form = document.getElementById('form-hapus-buku');
+      const label = document.getElementById('hapus-nama-buku');
+
+      if (form) form.action = '/buku_kas/hapus/' + bukuId;
+      if (label) label.textContent = bukuNama || 'organisasi terpilih';
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeModalHapusBuku() {
+      const modal = document.getElementById('modal-hapus-buku');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Dismiss with any key (Escape, Enter, Space, etc.)
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeModalHapusBuku();
+        document.getElementById('modal-tambah-buku')?.classList.add('hidden');
+      }
+      const panel = document.getElementById('welcome-panel');
+      if (panel && panel.style.display !== 'none' && !panel.classList.contains('welcome-panel-slide-out')) {
+        slideOutWelcomePanel();
+      }
+    });
+
+    // Check visibility on DOM load and auto-slide
+    document.addEventListener('DOMContentLoaded', function () {
+      const panel = document.getElementById('welcome-panel');
+      if (!panel) return;
+
+      const forceShow = panel.dataset.forceShow === 'true';
+      const urlParams = new URLSearchParams(window.location.search);
+      const isPreview = urlParams.has('welcome');
+
+      let alreadyDismissed = false;
+      try {
+        alreadyDismissed = sessionStorage.getItem('dashboard_welcome_dismissed') === 'true';
+      } catch (e) {}
+
+      if (forceShow || isPreview) {
+        try {
+          sessionStorage.removeItem('dashboard_welcome_dismissed');
+        } catch (e) {}
+        panel.style.display = 'flex';
+        // Auto slide out after 2.5 seconds to reveal the dashboard
+        setTimeout(() => {
+          slideOutWelcomePanel();
+        }, 2500);
+      } else if (alreadyDismissed) {
+        panel.style.display = 'none';
+      } else {
+        panel.style.display = 'flex';
+        // Auto slide out after 2.5 seconds to reveal the dashboard
+        setTimeout(() => {
+          slideOutWelcomePanel();
+        }, 2500);
+      }
+
+      // Auto-buka modal jika diarahkan dari halaman lain dengan query parameter
+      if (urlParams.get('modal') === 'tambah_buku' || urlParams.get('tambah_buku') === '1') {
+        const modalTambah = document.getElementById('modal-tambah-buku');
+        if (modalTambah) modalTambah.classList.remove('hidden');
+      }
+    });
+  </script>
+
+</body>
+
+</html>
