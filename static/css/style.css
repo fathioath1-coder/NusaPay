@@ -1,0 +1,649 @@
+/* ===========================================
+   NusaPay Design System — Premium Bank Edition
+   =========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ===========================
+   TOKENS / CSS VARIABLES
+   =========================== */
+:root {
+  /* Professional Bank Blue (BCA-inspired) */
+  --np-navy:         #00529C; 
+  --np-navy-mid:     #0066C0;
+  --np-navy-soft:    #1A75D2;
+  --np-blue:         #0082E6;
+  --np-blue-dark:    #0061B3;
+  --np-blue-xlight:  #F0F8FF;
+  --np-blue-light:   #E0F0FE;
+
+  --np-success:      #10B981;
+  --np-success-bg:   #ECFDF5;
+  --np-success-bdr:  #A7F3D0;
+  --np-danger:       #EF4444;
+  --np-danger-bg:    #FEF2F2;
+  --np-danger-bdr:   #FECACA;
+  --np-warning:      #F59E0B;
+  --np-warning-bg:   #FFFBEB;
+  --np-warning-bdr:  #FDE68A;
+
+  --np-bg:           #F8FAFC;
+  --np-card:         #FFFFFF;
+  --np-border:       #E2E8F0;
+  --np-border-light: #F1F5F9;
+
+  --np-text:         #1E293B;
+  --np-text-2:       #475569;
+  --np-text-3:       #64748B;
+
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm:  0 2px 4px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.03);
+  --shadow-lg:  0 12px 24px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.03);
+  --shadow-xl:  0 24px 48px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.04);
+
+  --np-radius-sm: 6px;
+  --np-radius:    8px;
+  --np-radius-lg: 12px;
+}
+
+/* ===========================
+   BASE RESET
+   =========================== */
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent;
+}
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  background-color: var(--np-bg) !important;
+  background-image: none !important;
+  animation: none !important;
+  color: var(--np-text-2) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: -0.01em;
+}
+
+/* ===========================
+   SIDEBAR
+   =========================== */
+aside {
+  background: var(--np-card) !important;
+  border-right: 1px solid var(--np-border) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Logo pill */
+aside .mb-8 a > div {
+  background: var(--np-navy);
+  padding: 8px 14px;
+  border-radius: var(--np-radius);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  box-shadow: var(--shadow-sm);
+}
+aside .mb-8 a > div span.text-slate-900 { color: #ffffff !important; font-size: 1.1rem !important; }
+aside .mb-8 a > div span.text-\[\#00aeef\] { color: #38bdf8 !important; font-size: 1.1rem !important; }
+aside .mb-8 a > div span.text-\[10px\] { color: rgba(255,255,255,0.5) !important; font-size: 9px !important; margin-top: -8px !important; }
+
+/* Section labels */
+aside nav > div > p {
+  font-size: 0.625rem !important;
+  letter-spacing: 0.1em !important;
+  color: var(--np-text-3) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  padding: 0 10px;
+}
+
+/* Nav items */
+aside nav a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 9px 12px !important;
+  border-radius: var(--np-radius) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--np-text-2) !important;
+  transition: all 0.18s ease !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+
+aside nav a:hover {
+  background: var(--np-bg) !important;
+  color: var(--np-text) !important;
+  border-color: var(--np-border-light) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+aside nav a.bg-\[\#00aeef\],
+aside nav a.bg-sky-500,
+aside nav a.bg-\[var\(--np-navy-mid\)\],
+aside nav a.active {
+  background: var(--np-navy) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-color: transparent !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+aside nav a.bg-\[\#00aeef\]:hover,
+aside nav a.bg-sky-500:hover,
+aside nav a.bg-\[var\(--np-navy-mid\)\]:hover,
+aside nav a.active:hover {
+  background: var(--np-navy-mid) !important;
+  transform: none !important;
+}
+
+/* Sidebar bottom CTA */
+aside > div > div.pt-4 a,
+aside > div > div.pt-4 button {
+  border-radius: var(--np-radius) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  padding: 11px 16px !important;
+  background: var(--np-navy) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.2s ease !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+aside > div > div.pt-4 a:hover,
+aside > div > div.pt-4 button:hover {
+  background: var(--np-navy-mid) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ===========================
+   MAIN CONTENT
+   =========================== */
+main { animation: fadeInUp 0.25s ease forwards; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===========================
+   HEADER ACTION BUTTONS (ghost style)
+   =========================== */
+button.inline-flex.items-center.gap-2.px-4.py-2\.5.rounded-xl.border,
+a.inline-flex.items-center.gap-2.px-4.py-2\.5.rounded-xl.border {
+  background: var(--np-card) !important;
+  border: 1px solid var(--np-border) !important;
+  color: var(--np-text-2) !important;
+  border-radius: var(--np-radius) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  box-shadow: var(--shadow-xs) !important;
+  transition: all 0.18s ease !important;
+}
+
+button.inline-flex.items-center.gap-2.px-4.py-2\.5.rounded-xl.border:hover,
+a.inline-flex.items-center.gap-2.px-4.py-2\.5.rounded-xl.border:hover {
+  background: var(--np-bg) !important;
+  border-color: #cbd5e1 !important;
+  color: var(--np-text) !important;
+  transform: none !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+button.inline-flex.items-center.gap-2.px-4.py-2\.5.rounded-xl.bg-\[\#00aeef\],
+a.inline-flex.items-center.gap-2.px-4.py-2\.5.rounded-xl.bg-\[\#00aeef\] {
+  background: var(--np-navy) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--np-radius) !important;
+  font-weight: 600 !important;
+  font-size: 0.8125rem !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+button.inline-flex.items-center.gap-2.px-4.py-2\.5.rounded-xl.bg-\[\#00aeef\]:hover {
+  background: var(--np-navy-mid) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ===========================
+   TAB SWITCHER
+   =========================== */
+div.w-full.flex.items-center.bg-white.p-1\.5.rounded-2xl.border {
+  background: var(--np-bg) !important;
+  border: 1px solid var(--np-border) !important;
+  border-radius: var(--np-radius) !important;
+  padding: 4px !important;
+  box-shadow: none !important;
+  gap: 4px !important;
+}
+
+div.w-full.flex.items-center.bg-white.p-1\.5.rounded-2xl.border a {
+  border-radius: var(--np-radius) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  padding: 9px 20px !important;
+  transition: all 0.18s ease !important;
+  color: var(--np-text-2) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+div.w-full.flex.items-center.bg-white.p-1\.5.rounded-2xl.border a:hover {
+  color: var(--np-text) !important;
+  background: rgba(255,255,255,0.7) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+div.w-full.flex.items-center.bg-white.p-1\.5.rounded-2xl.border a.bg-\[\#00aeef\] {
+  background: var(--np-card) !important;
+  color: var(--np-text) !important;
+  font-weight: 700 !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--np-border) !important;
+}
+
+/* ===========================
+   CARDS
+   =========================== */
+.bg-white, .glass-card, .soft-shadow {
+  background: var(--np-card) !important;
+  backdrop-filter: none !important;
+  border: 1px solid var(--np-border) !important;
+  box-shadow: var(--shadow-xs) !important;
+  border-radius: var(--np-radius) !important;
+  transition: box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+
+.hover-card-effect:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Stat card icon size */
+div.grid div.w-10.h-10,
+div.grid div.w-10.h-10.rounded-xl {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: var(--np-radius) !important;
+  flex-shrink: 0;
+}
+
+div.grid h3.text-2xl {
+  font-size: 1.375rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Saldo pill */
+div.hidden.sm\:flex.flex-col.text-right.bg-white {
+  background: var(--np-card) !important;
+  border: 1px solid var(--np-border) !important;
+  border-radius: var(--np-radius) !important;
+  box-shadow: var(--shadow-xs) !important;
+  padding: 8px 14px !important;
+}
+
+/* ===========================
+   BUTTONS (general)
+   =========================== */
+.bg-\[\#00aeef\], .bg-sky-500, .bg-\[\#009bd5\], .bg-\[\#0ea5e9\] {
+  background: var(--np-navy) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.2s ease !important;
+  font-weight: 600 !important;
+}
+
+.bg-\[\#00aeef\]:hover, .bg-sky-500:hover, .bg-\[\#009bd5\]:hover,
+.hover\:bg-\[\#009bd5\]:hover, .hover\:bg-\[\#0284c7\]:hover {
+  background: var(--np-navy-mid) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ===========================
+   BADGES
+   =========================== */
+.bg-emerald-50, .bg-\[\#e8f5e9\] {
+  background: var(--np-success-bg) !important;
+  color: var(--np-success) !important;
+  border: 1px solid var(--np-success-bdr) !important;
+  box-shadow: none !important;
+  border-radius: var(--np-radius) !important;
+  font-weight: 700 !important;
+}
+
+.bg-rose-50, .bg-\[\#ffebee\] {
+  background: var(--np-danger-bg) !important;
+  color: var(--np-danger) !important;
+  border: 1px solid var(--np-danger-bdr) !important;
+  box-shadow: none !important;
+  border-radius: var(--np-radius) !important;
+  font-weight: 700 !important;
+}
+
+.bg-sky-50, .bg-\[\#e0f2fe\] {
+  background: var(--np-blue-xlight) !important;
+  color: var(--np-blue-dark) !important;
+  border: 1px solid #bae6fd !important;
+  box-shadow: none !important;
+  border-radius: var(--np-radius) !important;
+  font-weight: 700 !important;
+}
+
+.bg-amber-50 {
+  background: var(--np-warning-bg) !important;
+  color: var(--np-warning) !important;
+  border: 1px solid var(--np-warning-bdr) !important;
+  box-shadow: none !important;
+  border-radius: var(--np-radius) !important;
+}
+
+/* ===========================
+   TEXT COLORS
+   =========================== */
+.text-\[\#00aeef\], .text-sky-500 { color: var(--np-blue) !important; }
+.text-\[\#2e7d32\], .text-emerald-700 { color: var(--np-success) !important; }
+.text-\[\#c62828\], .text-rose-600 { color: var(--np-danger) !important; }
+
+/* ===========================
+   FORM INPUTS
+   =========================== */
+input[type="text"], input[type="number"], input[type="email"],
+input[type="password"], input[type="time"], input[type="date"],
+select, textarea {
+  background: var(--np-bg) !important;
+  border: 1.5px solid var(--np-border) !important;
+  border-radius: var(--np-radius) !important;
+  color: var(--np-text) !important;
+  font-size: 0.875rem !important;
+  transition: all 0.18s ease !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.03) !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  background: #ffffff !important;
+  border-color: var(--np-blue) !important;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.12), inset 0 1px 2px rgba(0,0,0,0.02) !important;
+  outline: none !important;
+}
+
+/* ===========================
+   TABLE
+   =========================== */
+table { border-collapse: separate !important; border-spacing: 0 !important; width: 100%; }
+
+thead tr th {
+  background: var(--np-bg) !important;
+  color: var(--np-text-3) !important;
+  font-size: 0.625rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+  padding: 11px 16px !important;
+  border-bottom: 1px solid var(--np-border) !important;
+  border-top: none !important;
+  white-space: nowrap;
+}
+
+tbody tr { transition: background-color 0.12s ease !important; }
+
+tbody tr:hover td { background-color: #f8fafc !important; }
+
+tbody tr td {
+  border-bottom: 1px solid var(--np-border-light) !important;
+  padding: 13px 16px !important;
+  font-size: 0.8125rem !important;
+  vertical-align: middle !important;
+  color: var(--np-text-2) !important;
+}
+
+tbody tr:last-child td { border-bottom: none !important; }
+
+/* ===========================
+   ACTION BUTTONS (in Tables)
+   =========================== */
+td .flex.items-center.justify-end > button,
+td .flex.items-center.justify-end > form > button,
+td .flex.items-center.gap-1\.5 > button,
+td .flex.items-center.gap-1\.5 > form > button {
+  padding: 6px !important;
+  border-radius: var(--np-radius) !important;
+  border: 1px solid var(--np-border) !important;
+  background: var(--np-card) !important;
+  color: var(--np-text-3) !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+td .flex.items-center.justify-end > button:hover,
+td .flex.items-center.justify-end > form > button:hover,
+td .flex.items-center.gap-1\.5 > button:hover,
+td .flex.items-center.gap-1\.5 > form > button:hover {
+  border-color: #cbd5e1 !important;
+  color: var(--np-text) !important;
+  background: var(--np-bg) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Specific colored hover states based on icon */
+td button:hover .text-rose-600,
+td button:hover:has(.text-rose-600) { color: var(--np-danger) !important; border-color: var(--np-danger-bdr) !important; background: var(--np-danger-bg) !important; }
+
+td button:hover .text-emerald-600,
+td button:hover:has(.text-emerald-600) { color: var(--np-success) !important; border-color: var(--np-success-bdr) !important; background: var(--np-success-bg) !important; }
+
+td button:hover .text-blue-600,
+td button:hover:has(.text-blue-600) { color: var(--np-blue) !important; border-color: var(--np-blue-light) !important; background: var(--np-blue-xlight) !important; }
+
+/* Large Action Buttons in Table (e.g. Bayar / Ingatkan) */
+td button.px-3.py-1\.5 {
+  padding: 6px 12px !important;
+  border-radius: var(--np-radius) !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  border: 1px solid var(--np-border) !important;
+}
+
+td button.px-3.py-1\.5.bg-blue-600,
+td button.px-3.py-1\.5.bg-\[\#00aeef\] {
+  background: var(--np-navy) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+td button.px-3.py-1\.5.bg-blue-600:hover,
+td button.px-3.py-1\.5.bg-\[\#00aeef\]:hover {
+  background: var(--np-navy-mid) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ===========================
+   MODALS
+   =========================== */
+.fixed.inset-0 { backdrop-filter: blur(6px) !important; }
+
+/* ===========================
+   TOASTS
+   =========================== */
+.flash-toast {
+  background: var(--np-card) !important;
+  border: 1px solid var(--np-border) !important;
+  border-radius: var(--np-radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+  animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards !important;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ===========================
+   FILTER TOOLBAR TABS
+   =========================== */
+div.bg-slate-50.p-1.rounded-xl.border {
+  background: var(--np-bg) !important;
+  border-color: var(--np-border) !important;
+  border-radius: var(--np-radius) !important;
+  padding: 3px !important;
+}
+
+div.bg-slate-50.p-1.rounded-xl.border button {
+  border-radius: var(--np-radius) !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+  transition: all 0.15s ease !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  color: var(--np-text-2) !important;
+  background: transparent !important;
+}
+
+div.bg-slate-50.p-1.rounded-xl.border button.bg-white {
+  background: var(--np-card) !important;
+  color: var(--np-text) !important;
+  box-shadow: var(--shadow-xs) !important;
+  border: 1px solid var(--np-border) !important;
+}
+
+/* ===========================
+   ICONS
+   =========================== */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  transition: transform 0.18s ease, color 0.15s ease;
+}
+
+[data-weight="fill"] { font-variation-settings: 'FILL' 1; }
+
+a:hover .material-symbols-outlined,
+button:hover .material-symbols-outlined { transform: scale(1.08); }
+
+/* ===========================
+   SCROLLBAR
+   =========================== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: var(--np-radius); }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ===========================
+   LANDING PAGE
+   =========================== */
+.hero-card, .form-card {
+  background: rgba(255,255,255,0.97) !important;
+  border: 1px solid var(--np-border) !important;
+  box-shadow: var(--shadow-xl) !important;
+  border-radius: var(--np-radius) !important;
+  backdrop-filter: none !important;
+}
+
+.btn-primary, .btn-submit, .btn-login {
+  background: var(--np-navy) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-radius: var(--np-radius) !important;
+  color: white !important;
+  font-weight: 700 !important;
+}
+.btn-primary:hover, .btn-submit:hover, .btn-login:hover {
+  background: var(--np-navy-mid) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.btn-signup {
+  background: var(--np-card) !important;
+  border: 1.5px solid var(--np-border) !important;
+  color: var(--np-text) !important;
+  border-radius: var(--np-radius) !important;
+}
+.btn-signup:hover { background: var(--np-bg) !important; border-color: #94a3b8 !important; }
+
+.btn-secondary {
+  color: var(--np-text-2) !important;
+  border: 1px solid var(--np-border) !important;
+  background: var(--np-card) !important;
+  border-radius: var(--np-radius) !important;
+}
+.btn-secondary:hover { background: var(--np-bg) !important; color: var(--np-text) !important; }
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--np-navy) 20%, var(--np-blue) 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.badge {
+  background: var(--np-blue-xlight) !important;
+  border-color: #bae6fd !important;
+  color: var(--np-blue-dark) !important;
+  border-radius: var(--np-radius) !important;
+}
+
+.navbar {
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid var(--np-border) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.form-group input {
+  background: var(--np-bg) !important;
+  border-color: var(--np-border) !important;
+  color: var(--np-text) !important;
+  border-radius: var(--np-radius) !important;
+}
+.form-group input:focus {
+  border-color: var(--np-blue) !important;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.12) !important;
+  background: white !important;
+}
+
+/* ===========================
+   MOBILE BOTTOM NAV
+   =========================== */
+.fixed.bottom-0.left-0.right-0 {
+  background: rgba(255,255,255,0.97) !important;
+  backdrop-filter: blur(20px) !important;
+  border-top: 1px solid var(--np-border) !important;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.05) !important;
+}
+
+/* GLOBAL ROUNDED OVERRIDE */
+.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-full {
+  border-radius: var(--np-radius) !important;
+}
+
+/* Exception for true circles like profile pics, icon wrappers, or color dots */
+.w-1\.5.h-1\.5, .w-8.h-8, .w-9.h-9, .w-10.h-10, .w-16.h-16, .orb-1, .orb-2, .glow-pulse {
+  border-radius: 50% !important;
+}

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html class="light" lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>NusaPay</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+            display: ["Inter", "sans-serif"],
+          },
+          colors: {
+            primary: "#0f172a",
+            "primary-light": "#1e293b",
+            accent: "#0ea5e9",
+            "accent-dark": "#0284c7",
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    [data-weight="fill"] { font-variation-settings: 'FILL' 1; }
+    .hover-card-effect { transition: all 0.2s ease; }
+    .soft-shadow { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- SIDEBAR (PERSIS DENGAN KODE ACUAN: PUTIH, TEXT SLATE, ACTIVE CYAN #0066C0) -->
+  <aside class="w-64 min-w-[16rem] bg-white border-r border-slate-100 flex flex-col justify-between p-6 shrink-0 h-screen sticky top-0 hidden md:flex z-40">
+    <div class="flex flex-col flex-1">
+      <div class="mb-6 pb-4 border-b border-slate-100">
+        <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <div class="flex items-center select-none font-bold text-2xl tracking-tight leading-none">
+            <span class="text-slate-900 font-bold -tracking-wider lowercase">nusa</span>
+            <span class="text-[var(--np-navy-mid)] font-bold -tracking-wider lowercase">pay</span>
+            <span class="text-[10px] font-black text-slate-900 ml-0.5 -mt-2 align-top">TM</span>
+          </div>
+        </a>
+      </div>
+      <nav class="flex-1 space-y-1.5">
+        <div class="pt-4 pb-2">
+          <p class="px-3.5 text-xs font-bold text-slate-400 uppercase tracking-wider">Navigasi</p>
+        </div>
+
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all" href="{{ url_for('penagihankas') }}">
+          <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+          <span>Dashboard Kas</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all" href="{{ url_for('pengeluarankas') }}">
+          <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+          <span>Pengeluaran Kas</span>
+        </a>
+        <!-- ACTIVE STATE: PENGATURAN -->
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[var(--np-navy-mid)] text-white font-semibold text-sm shadow-sm transition-all" href="{{ url_for('pengaturan') }}">
+          <span class="material-symbols-outlined text-[20px]">settings</span>
+          <span>Pengaturan</span>
+        </a>
+      </nav>
+    </div>
+
+  </aside>
+
+  <!-- KONTEN UTAMA -->
+  <div class="flex-1 flex flex-col w-full">
+    <main class="flex-1 p-4 sm:p-8 pb-24 overflow-y-auto">
+      <!-- HEADER -->
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+        <div>
+          <div class="text-sm font-semibold text-sky-500 mb-1 flex items-center gap-1.5">
+            <span>Pengaturan</span>
+            <span class="text-slate-300 font-normal">/</span>
+            <span class="text-slate-500 font-normal">Sistem &amp; Notifikasi</span>
+          </div>
+          <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Pengaturan Sistem &amp; Notifikasi</h1>
+          <p class="text-sm text-slate-500 mt-1 font-normal">Kelola konfigurasi pesan pengingat, pengaturan email otomatis, jadwal tagihan, serta preferensi umum NusaPay.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 justify-end">
+          <button type="button" onclick="document.getElementById('modal-logout-confirm').classList.remove('hidden')" class="bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
+            <span class="material-symbols-outlined text-[18px]">logout</span>
+            <span>Keluar Akun</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- GRID PENGATURAN -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- KOLOM KIRI (UTAMA) -->
+        <div class="lg:col-span-2 space-y-6">
+          <form method="POST" action="{{ url_for('pengaturan') }}" enctype="multipart/form-data">
+
+
+          <!-- KARTU: PENGATURAN QRIS PEMBAYARAN KAS -->
+          <div class="bg-white rounded-2xl soft-shadow border border-slate-200/60 p-6 space-y-6 hover-card-effect">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center font-bold shrink-0">
+                  <span class="material-symbols-outlined text-[24px]">qr_code_2</span>
+                </div>
+                <div>
+                  <h2 class="text-[18px] font-bold text-slate-900 tracking-tight">Pengaturan QRIS Pembayaran Kas</h2>
+                  <p class="text-[13px] text-slate-500 font-normal mt-0.5">Unggah dan kelola foto kode QRIS untuk mempermudah pembayaran seluruh siswa</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <label class="block text-[13px] font-bold text-slate-800">Metode Penerimaan Terhubung</label>
+              <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-[#f8fafc]">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-[var(--np-navy-mid)] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    <span class="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+                  </div>
+                  <div>
+                    <p class="text-[13px] font-bold text-slate-900">QRIS Pembayaran Kas</p>
+                    <p class="text-[11px] text-slate-400">Terverifikasi Standar Nasional</p>
+                  </div>
+                </div>
+                <div class="flex items-center flex-wrap gap-2 shrink-0">
+                  <button type="button" onclick="document.getElementById('modal-preview-qris').classList.remove('hidden')" class="px-3 py-1.5 rounded-xl border border-[#0066C0]/40 bg-[var(--np-navy-mid)]/10 text-[var(--np-navy-mid)] hover:bg-[var(--np-navy-mid)]/20 text-[12px] font-bold flex items-center gap-1.5 transition-all">
+                    <span class="material-symbols-outlined text-[15px]">qr_code_scanner</span>
+                    <span>Lihat QRIS</span>
+                  </button>
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#e8f5e9] text-[#2e7d32] border border-[#c8e6c9]/50 text-[11px] font-bold font-mono shrink-0">
+                    <span class="w-1.5 h-1.5 rounded-lg bg-[#2e7d32]"></span>
+                    <span>Aktif Utama</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-slate-100">
+              <div class="flex items-start gap-4">
+                <div class="mt-1">
+                  <span class="material-symbols-outlined text-[20px] text-slate-400">qr_code_2</span>
+                </div>
+                <div class="flex-1">
+                  <label class="text-sm font-bold text-slate-700 block mb-1">Pengaturan QRIS Kas</label>
+                  <p class="text-xs text-slate-500 mb-3">Unggah gambar kode QRIS untuk mempermudah pembayaran siswa.</p>
+                  
+                  {% if user.qris_path %}
+                  <div class="mb-4">
+                    <img src="{{ url_for('static', filename='uploads/' + user.qris_path) }}" alt="QRIS Aktif" class="w-32 h-32 rounded-xl shadow-sm border border-slate-200 object-cover">
+                    <p class="text-[11px] text-emerald-600 font-medium mt-1">✓ QRIS Aktif</p>
+                  </div>
+                  {% endif %}
+
+                  <div class="relative">
+                    <input type="file" name="qris_image" id="qris_image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-[#00509d] hover:file:bg-sky-100 cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50 transition-colors focus:border-sky-300 focus:ring focus:ring-sky-200 focus:ring-opacity-50">
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-1.5">Mendukung file JPG, PNG. (Maks. 2MB disarankan)</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end pt-4 border-t border-slate-100">
+              <button type="submit" class="bg-[var(--np-navy-mid)] text-white font-semibold text-sm px-6 py-2.5 rounded-xl hover:bg-[var(--np-navy)] transition-all shadow-[0_4px_16px_rgba(0,174,239,0.25)] flex items-center gap-2 hover:-translate-y-0.5 active:scale-95 cursor-pointer">
+                <span class="material-symbols-outlined text-[20px]">save</span>
+                <span>Simpan Perubahan</span>
+              </button>
+            </div>
+          </div>
+          </form>
+        </div>
+
+        <!-- KOLOM KANAN (INTEGRASI EMAIL) -->
+        <div class="space-y-6">
+          <!-- KARTU 3: STATUS INTEGRASI -->
+          <div class="bg-white rounded-2xl soft-shadow border border-slate-200/60 p-6 hover-card-effect">
+            <div class="flex items-center gap-3 mb-5">
+              <div class="w-10 h-10 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center font-bold shrink-0">
+                <span class="material-symbols-outlined text-[22px]">hub</span>
+              </div>
+              <div>
+                <h2 class="text-[17px] font-bold text-slate-900">Status Integrasi Kanal</h2>
+                <p class="text-[12px] text-slate-500">Gateway pengirim pesan bot</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="p-4 rounded-xl border border-slate-100 bg-[#f8fafc]">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-sky-500 text-white flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-[16px]">mail</span>
+                    </div>
+                    <span class="text-[14px] font-bold text-slate-900">Email Gateway</span>
+                  </div>
+                  <span class="px-2 py-0.5 bg-[#e8f5e9] text-[#2e7d32] text-[11px] rounded-lg font-bold border border-[#c8e6c9]/50">SMTP Terhubung</span>
+                </div>
+                <p class="text-[12px] text-slate-600 font-mono mb-1">Flask-Mail SMTP</p>
+                <p class="text-[11px] text-slate-400">Port 587 • TLS Secured</p>
+              </div>
+
+              <form method="POST" action="{{ url_for('pengaturan_test_email') }}">
+                <input type="hidden" name="email" value="{{ (user.email if user else '') }}">
+                <button type="submit" class="w-full py-2.5 px-4 rounded-xl border border-[#0066C0] text-[var(--np-navy-mid)] hover:bg-sky-50 font-medium text-[12px] transition-colors flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                  <span class="material-symbols-outlined text-[16px]">send</span>
+                  <span>Uji Kirim Pesan via Email</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- KARTU 4: ALAMAT EMAIL PENGGUNA -->
+          <div class="bg-white rounded-2xl soft-shadow border border-slate-200/60 p-6 space-y-4 hover-card-effect">
+            <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold shrink-0">
+                <span class="material-symbols-outlined text-[22px]">alternate_email</span>
+              </div>
+              <div>
+                <h3 class="text-[16px] font-bold text-slate-900">Alamat Email Pengguna</h3>
+                <p class="text-[12px] text-slate-500">Hubungkan email untuk notifikasi</p>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl border border-slate-100 bg-[#f8fafc] flex items-center justify-between">
+              <div class="space-y-0.5">
+                <p class="text-[11px] font-medium text-slate-500">Email Utama Terhubung</p>
+                <p class="text-[14px] font-bold font-mono text-slate-900">{{ user.email if user else "user@example.com" }}</p>
+              </div>
+            </div>
+
+            <div class="pt-2 flex items-start gap-2 text-[11px] text-slate-500">
+              <span class="material-symbols-outlined text-[15px] text-sky-500 shrink-0 mt-0.5">info</span>
+              <p>Pesan dan notifikasi tagihan akan dikirimkan otomatis ke alamat email ini via SMTP.</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- FLOATING BUTTON (MOBILE) -->
+  <button class="fixed bottom-8 right-8 w-14 h-14 bg-[var(--np-navy-mid)] text-white rounded-lg shadow-[0_8px_24px_rgba(0,174,239,0.4)] flex items-center justify-center hover:bg-[var(--np-navy)] hover:scale-110 transition-all z-50 md:hidden" onclick="document.getElementById('modal-confirm-save').classList.remove('hidden')">
+    <span class="material-symbols-outlined text-[28px]">add</span>
+  </button>
+
+  <!-- MODAL PREVIEW QRIS -->
+  <div id="modal-preview-qris" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-white overflow-hidden transition-all">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-[#f8fafc]">
+        <div>
+          <h3 class="text-[16px] font-bold text-slate-900 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[var(--np-navy-mid)] text-[20px]">qr_code_2</span> Pratinjau Kode QRIS Kas
+          </h3>
+          <p class="text-[12px] text-slate-500">Scan untuk verifikasi pembayaran iuran kas kelas</p>
+        </div>
+        <button type="button" onclick="document.getElementById('modal-preview-qris').classList.add('hidden')" class="w-8 h-8 rounded-lg hover:bg-slate-200/70 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="p-6 flex flex-col items-center bg-white">
+        {% if user.qris_path %}
+        <div class="w-full bg-[#f8fafc] border border-slate-200/80 rounded-2xl p-5 flex flex-col items-center text-center soft-shadow relative">
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm mb-3 flex items-center justify-center">
+            <img src="{{ url_for('static', filename='uploads/' + user.qris_path) }}" alt="QRIS Kas" class="w-80 h-80 object-contain rounded-lg">
+          </div>
+          <h4 class="text-[15px] font-bold text-slate-900">KAS KELAS</h4>
+          <p class="text-xs text-slate-500 mt-1">Barcode QRIS Resmi Pembayaran Kas</p>
+        </div>
+        <div class="grid grid-cols-1 gap-3 w-full mt-5">
+          <button type="button" onclick="alert('Mendownload kode QRIS...');" class="w-full py-2.5 px-3 rounded-xl border border-[#0066C0] bg-sky-50 text-[var(--np-navy-mid)] hover:bg-sky-100 font-bold text-[12px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[16px]">download</span> Unduh QRIS
+          </button>
+        </div>
+        {% else %}
+        <div class="w-full flex flex-col items-center justify-center py-6">
+          <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">image_not_supported</span>
+          <p class="text-sm font-bold text-slate-700 mb-1">QRIS Belum Tersedia</p>
+          <p class="text-xs text-slate-500 text-center mb-6 max-w-xs">Ayo tambahkan file gambar QRIS terlebih dahulu agar bisa ditampilkan di sini.</p>
+        </div>
+        {% endif %}
+        <button type="button" onclick="document.getElementById('modal-preview-qris').classList.add('hidden')" class="w-full mt-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[12px] transition-colors cursor-pointer">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL KONFIRMASI SIMPAN -->
+  <div id="modal-confirm-save" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-white overflow-hidden transition-all">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-[#f8fafc]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-[20px]">settings_suggest</span>
+          </div>
+          <div>
+            <h3 class="text-[16px] font-bold text-slate-900">Konfirmasi Simpan Perubahan</h3>
+            <p class="text-[11px] text-slate-500">Konfirmasi konfigurasi sistem &amp; notifikasi</p>
+          </div>
+        </div>
+        <button type="button" onclick="document.getElementById('modal-confirm-save').classList.add('hidden')" class="w-8 h-8 rounded-lg hover:bg-slate-200/70 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="p-6 flex flex-col">
+        <div class="p-4 rounded-xl bg-sky-50/60 border border-sky-200/50 mb-4">
+          <p class="text-[13px] text-slate-800 font-medium leading-relaxed">Apakah Anda yakin ingin menyimpan seluruh perubahan konfigurasi sistem dan notifikasi ini?</p>
+          <p class="text-[12px] text-slate-500 mt-2">Pastikan data konfigurasi notifikasi, jadwal pengingat tagihan, dan nominal iuran sudah sesuai sebelum disimpan.</p>
+        </div>
+        <div class="flex items-center justify-end gap-3">
+          <button type="button" onclick="document.getElementById('modal-confirm-save').classList.add('hidden')" class="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-[13px] transition-all">Batal</button>
+          <button type="button" onclick="document.getElementById('modal-confirm-save').classList.add('hidden'); alert('Perubahan konfigurasi sistem & notifikasi berhasil disimpan!');" class="py-2.5 px-5 rounded-xl bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white font-semibold text-[13px] transition-all shadow-[0_4px_16px_rgba(0,174,239,0.25)] flex items-center gap-1.5 cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span> Ya, Simpan Perubahan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL LOGOUT CONFIRM -->
+  <div id="modal-logout-confirm" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" onclick="if(event.target === this) this.classList.add('hidden')">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-white overflow-hidden p-6 text-center animate-in fade-in zoom-in duration-200">
+      <div class="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-[28px]">logout</span>
+      </div>
+      <h3 class="text-[18px] font-bold text-slate-900 mb-2">Keluar dari Akun?</h3>
+      <p class="text-[13px] text-slate-500 leading-relaxed mb-6">Apakah Anda yakin ingin keluar dari akun NusaPay? Sesi aktif Anda akan diakhiri dan dialihkan ke halaman utama.</p>
+      <div class="flex items-center justify-center gap-3">
+        <button type="button" onclick="document.getElementById('modal-logout-confirm').classList.add('hidden')" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition-all cursor-pointer text-sm">Batal</button>
+        <a href="{{ url_for('logout') }}" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-all shadow-sm shadow-rose-200 cursor-pointer flex items-center gap-2 text-sm">
+          <span class="material-symbols-outlined text-[18px]">logout</span>
+          <span>Ya, Keluar</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

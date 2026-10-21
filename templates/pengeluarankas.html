@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html class="light" lang="id">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>NusaPay</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+            display: ["Inter", "sans-serif"],
+          },
+          colors: {
+            primary: "#0f172a",
+            "primary-light": "#1e293b",
+            accent: "#0ea5e9",
+            "accent-dark": "#0284c7",
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    [data-weight="fill"] { font-variation-settings: 'FILL' 1; }
+    .hover-card-effect { transition: all 0.2s ease; }
+    .soft-shadow { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  </style>
+</head>
+
+<body class="min-h-screen flex relative">
+
+  <!-- Toast Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-md w-full px-4 sm:px-0" id="flashContainer">
+    {% for category, message in messages %}
+    <div
+      class="flash-toast transform transition-all duration-300 flex items-center gap-3 bg-white border border-slate-200 p-4 rounded-2xl shadow-xl shadow-slate-200/50">
+      <div
+        class="w-9 h-9 rounded-xl {% if category == 'success' %}bg-emerald-50 text-emerald-600{% elif category == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-sky-50 text-[var(--np-navy-mid)]{% endif %} flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-[20px]">
+          {% if category == 'success' %}check_circle{% elif category == 'danger' %}error{% else %}info{% endif %}
+        </span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h4 class="text-sm font-bold text-slate-900">
+          {% if category == 'success' %}Berhasil!{% elif category == 'danger' %}Peringatan!{% else %}Pemberitahuan{%
+          endif %}
+        </h4>
+        <p class="text-xs text-slate-500 leading-snug">{{ message }}</p>
+      </div>
+      <button type="button" onclick="this.closest('.flash-toast').remove()"
+        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- SIDEBAR -->
+  <aside
+    class="w-64 min-w-[16rem] bg-white border-r border-slate-100 flex flex-col justify-between p-6 shrink-0 h-screen sticky top-0 hidden md:flex z-40">
+    <div class="flex flex-col flex-1">
+      <div class="mb-6 pb-4 border-b border-slate-100">
+        <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <div class="flex items-center select-none font-bold text-2xl tracking-tight leading-none">
+            <span class="text-slate-900 font-bold -tracking-wider lowercase">nusa</span>
+            <span class="text-[var(--np-navy-mid)] font-bold -tracking-wider lowercase">pay</span>
+            <span class="text-[10px] font-black text-slate-900 ml-0.5 -mt-2 align-top">TM</span>
+          </div>
+        </a>
+      </div>
+      <nav class="flex-1 space-y-1.5">
+        <div class="pt-4 pb-2">
+          <p class="px-3.5 text-xs font-bold text-slate-400 uppercase tracking-wider">Modul Kas</p>
+        </div>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
+          href="{{ url_for('penagihankas') }}">
+          <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+          <span>Dashboard Kas</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[var(--np-navy-mid)] text-white font-semibold text-sm shadow-sm transition-all"
+          href="{{ url_for('pengeluarankas') }}">
+          <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+          <span>Pengeluaran Kas</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
+          href="{{ url_for('pengaturan') }}">
+          <span class="material-symbols-outlined text-[20px]">settings</span>
+          <span>Pengaturan</span>
+        </a>
+      </nav>
+    </div>
+    <div class="pt-4 border-t border-slate-100 space-y-3">
+      <button type="button" onclick="openModalCatatPengeluaran()"
+        class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white font-semibold text-sm shadow-sm transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        <span>Catat Pengeluaran</span>
+      </button>
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <div class="w-8 h-8 rounded-full bg-blue-100 text-[#00529C] font-bold text-xs flex items-center justify-center shrink-0">
+            {{ (session.get('user_name') or 'B')[:1]|upper }}
+          </div>
+          <div class="truncate">
+            <p class="text-xs font-bold text-slate-800 truncate">{{ session.get('user_name', 'Bendahara') }}</p>
+            <p class="text-[10px] text-slate-400 capitalize">{{ session.get('user_role', 'Bendahara') }}</p>
+          </div>
+        </div>
+        <a href="{{ url_for('logout') }}" title="Keluar / Ganti Akun" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all flex items-center justify-center cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">logout</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTAINER -->
+  <div class="flex-1 flex flex-col w-full min-w-0">
+    <main class="flex-1 p-4 sm:p-8 pb-24 overflow-y-auto max-w-7xl w-full mx-auto">
+      <!-- Header Title & Action Buttons -->
+      <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 mb-2">
+            <span class="text-slate-400">Kas & Keuangan</span>
+            <span class="text-slate-300">/</span>
+            <span class="text-slate-600 font-semibold">Pengeluaran Kas</span>
+          </div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight leading-tight">Pengeluaran Kas</h1>
+          <p class="text-[12px] text-slate-400 mt-1 leading-relaxed">Catat pengeluaran kas kelas, pantau bukti pembayaran, dan kelola arus keluar uang kas secara transparan.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="openModalLaporan()" type="button"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition-all shadow-sm whitespace-nowrap"
+            id="btnExportPdf">
+            <span class="material-symbols-outlined text-[20px] text-slate-600">picture_as_pdf</span>
+            <span>Unduh Laporan</span>
+          </button>
+          <button onclick="openModalCatatPengeluaran()" type="button"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white font-semibold text-sm shadow-sm transition-all whitespace-nowrap">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            <span>Catat Pengeluaran</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Switch Tab: Pengeluaran Kas vs Penagihan Iuran Kas -->
+      <div class="mb-6 flex items-center justify-between">
+        <div class="w-full flex items-center bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-sm gap-1.5">
+          <a href="{{ url_for('pengeluarankas') }}"
+            class="flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 bg-[var(--np-navy-mid)] text-white shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">payments</span>
+            <span>Pengeluaran Kas</span>
+          </a>
+          <a href="{{ url_for('penagihankas') }}"
+            class="flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+            <span class="material-symbols-outlined text-[18px]">fact_check</span>
+            <span>Penagihan Iuran Kas</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 4 Ringkasan Kartu Metrik Kas -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- 1. Total Pengeluaran Bulan Ini -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-[#ffebee] text-[#c62828] rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">trending_down</span>
+            </div>
+            <span class="text-xs text-[#c62828] bg-[#ffebee] px-2.5 py-1 rounded-lg font-bold border border-rose-100">
+              Total Keluar
+            </span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Total Pengeluaran Kas</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Rp {{
+              "{:,.0f}".format(total_pengeluaran|default(0)).replace(',', '.') }}</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1">
+              {% if total_transaksi > 0 %}Dari total arus kas keluar{% else %}Belum ada pengeluaran{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. Transaksi Tercatat -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-[#e8f5e9] text-[#2e7d32] rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">check_circle</span>
+            </div>
+            <span
+              class="text-xs text-[#2e7d32] bg-[#e8f5e9] px-2.5 py-1 rounded-lg font-bold border border-emerald-100">
+              {{ total_transaksi|default(0) }} Transaksi
+            </span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Transaksi Tercatat</p>
+            <h3 class="text-2xl font-bold text-[#2e7d32] tracking-tight">{{ total_transaksi|default(0) }} Transaksi</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1">
+              {% if total_transaksi > 0 %}Tercatat di pembukuan kas{% else %}Belum ada transaksi{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Pengeluaran Terbesar -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">shopping_bag</span>
+            </div>
+            <span
+              class="text-xs text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg font-bold border border-amber-100 truncate max-w-[120px]">
+              {% if terbesar_kategori and terbesar_kategori != '-' %}{{ terbesar_kategori }}{% else %}Pengeluaran{%
+              endif %}
+            </span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Pengeluaran Terbesar</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Rp {{
+              "{:,.0f}".format(pengeluaran_terbesar|default(0)).replace(',', '.') }}</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1 truncate" title="{{ terbesar_nama|default('-') }}">
+              {{ terbesar_nama|default('Belum ada data') }}
+            </p>
+          </div>
+        </div>
+
+        <!-- 4. Sisa Saldo Kas Aktif -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-sky-50 text-[var(--np-navy-mid)] rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+            </div>
+            <span class="text-xs text-[var(--np-navy-mid)] bg-sky-50 px-2.5 py-1 rounded-lg font-bold border border-sky-100">Saldo
+              Kas</span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Sisa Saldo Kas Aktif</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Rp {{
+              "{:,.0f}".format(saldo_kas_aktif|default(0)).replace(',', '.') }}</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1">
+              {% if saldo_kas_aktif > 0 %}Saldo kas aman{% elif saldo_kas_aktif < 0 %}Defisit kas kelas{% else %}Saldo
+                kas kosong{% endif %} </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Riwayat Pengeluaran Kas (Tabel & Filter) -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+        <!-- Toolbar Pencarian & Filter -->
+        <div
+          class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+          <div class="flex items-center gap-3 flex-1 flex-wrap">
+            <div class="relative flex-1 min-w-[220px] max-w-md">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+              <input
+                class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#0066C0] focus:bg-white text-slate-900 transition-all"
+                placeholder="Cari nama pengeluaran, keperluan, kategori..." type="text" id="inputSearchPengeluaran"
+                oninput="filterPengeluaran()">
+            </div>
+            <div class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 flex-wrap">
+              <button type="button" id="tabFilterSemua" onclick="setFilterKategori('all')"
+                class="px-3 py-1.5 text-xs font-semibold bg-white text-slate-900 rounded-lg shadow-sm transition-all">Semua</button>
+              <button type="button" id="tabFilterAtk" onclick="setFilterKategori('atk')"
+                class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all">ATK</button>
+              <button type="button" id="tabFilterKebersihan" onclick="setFilterKategori('kebersihan')"
+                class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all">Kebersihan</button>
+              <button type="button" id="tabFilterKonsumsi" onclick="setFilterKategori('konsumsi')"
+                class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all">Konsumsi</button>
+              <button type="button" id="tabFilterFotokopi" onclick="setFilterKategori('fotokopi')"
+                class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all">Fotokopi</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="openModalCatatPengeluaran()"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white text-xs font-semibold rounded-xl shadow-sm transition-all">
+              <span class="material-symbols-outlined text-[18px]">add</span>
+              <span>Catat Pengeluaran</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabel Histori Pengeluaran Kas -->
+        <div class="overflow-x-auto overflow-y-auto">
+          <table class="w-full text-left border-collapse" id="tablePengeluaran">
+            <thead class="border-b border-slate-100 bg-slate-50/50 sticky top-0">
+              <tr>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Keperluan /
+                  Pengeluaran</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Kategori</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500 font-label-md">Tanggal
+                </th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Nominal</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Metode</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm" id="tbodyPengeluaran">
+              {% if transactions %}
+              {% for item in transactions %}
+              {% set fmt_nominal = "{:,.0f}".format(item.nominal|default(0)).replace(',', '.') %}
+              {% set kat = item.kategori|default('Operasional') %}
+              {% set kat_lower = kat|lower %}
+              <tr class="hover:bg-slate-50/70 transition-colors pengeluaran-row" data-name="{{ item.keterangan|lower }}"
+                data-kategori="{{ kat_lower }}" data-metode="{{ (item.metode_pembayaran or '')|lower }}"
+                data-catatan="{{ (item.catatan or '')|lower }}">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg 
+                        {% if 'atk' in kat_lower %}bg-sky-50 text-[var(--np-navy-mid)] border border-sky-100
+                        {% elif 'kebersihan' in kat_lower %}bg-emerald-50 text-emerald-600 border border-emerald-100
+                        {% elif 'konsumsi' in kat_lower %}bg-rose-50 text-rose-600 border border-rose-100
+                        {% elif 'fotokopi' in kat_lower %}bg-amber-50 text-amber-600 border border-amber-100
+                        {% elif 'kesehatan' in kat_lower or 'p3k' in kat_lower %}bg-teal-50 text-teal-600 border border-teal-100
+                        {% else %}bg-indigo-50 text-indigo-600 border border-indigo-100{% endif %} 
+                        font-bold text-sm flex items-center justify-center shrink-0">
+                      {{ item.inisial }}
+                    </div>
+                    <div>
+                      <p class="font-bold text-slate-800 leading-snug">{{ item.keterangan }}</p>
+                      <p class="text-xs text-slate-400">
+                        {% if item.catatan %}
+                        {{ item.catatan }}
+                        {% else %}
+                        Pengeluaran Kas Kelas
+                        {% endif %}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-4 px-4">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold 
+                      {% if 'atk' in kat_lower %}bg-sky-50 text-sky-700 border border-sky-100
+                      {% elif 'kebersihan' in kat_lower %}bg-emerald-50 text-emerald-700 border border-emerald-100
+                      {% elif 'konsumsi' in kat_lower %}bg-rose-50 text-rose-600 border border-rose-100
+                      {% elif 'fotokopi' in kat_lower %}bg-amber-50 text-amber-700 border border-amber-100
+                      {% elif 'kesehatan' in kat_lower or 'p3k' in kat_lower %}bg-teal-50 text-teal-700 border border-teal-100
+                      {% else %}bg-indigo-50 text-indigo-700 border border-indigo-100{% endif %}">
+                    {{ kat }}
+                  </span>
+                </td>
+                <td class="py-4 px-4 text-xs font-medium text-slate-500 font-label-md">
+                  {{ item.tanggal.strftime('%d %b %Y') if item.tanggal else '-' }}
+                </td>
+                <td class="py-4 px-4 font-bold text-slate-800">
+                  Rp {{ fmt_nominal }}
+                </td>
+                <td class="py-4 px-4 text-xs font-medium text-slate-600">
+                  {{ item.metode_pembayaran or 'Kas Tunai' }}
+                </td>
+                <td class="py-4 px-4">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#e8f5e9] text-[#2e7d32]">
+                    Lunas
+                  </span>
+                </td>
+                <td class="py-4 px-4 text-right">
+                  <div class="inline-flex items-center justify-end gap-1.5">
+                    <button type="button" data-id="{{ item.id }}" data-judul="{{ item.keterangan }}"
+                      data-kategori="{{ kat }}"
+                      data-tanggal="{{ item.tanggal.strftime('%d %b %Y') if item.tanggal else '-' }}"
+                      data-nominal="Rp {{ fmt_nominal }}" data-metode="{{ item.metode_pembayaran or 'Kas Tunai' }}"
+                      data-catatan="{{ item.catatan or '-' }}" data-inisial="{{ item.inisial }}"
+                      onclick="openModalDetail(this.dataset.id, this.dataset.judul, this.dataset.kategori, this.dataset.tanggal, this.dataset.nominal, this.dataset.metode, this.dataset.catatan, this.dataset.inisial)"
+                      class="px-3 py-1.5"
+                      title="Lihat Bukti / Struk">
+                      Bukti
+                    </button>
+                    <button type="button" data-id="{{ item.id }}" data-keperluan="{{ item.keterangan }}"
+                      data-kategori="{{ kat }}"
+                      data-tanggal="{{ item.tanggal.strftime('%Y-%m-%d') if item.tanggal else '' }}"
+                      data-nominal="{{ item.nominal|int }}" data-metode="{{ item.metode_pembayaran or 'Kas Tunai' }}"
+                      data-catatan="{{ item.catatan or '' }}"
+                      onclick="openModalEditPengeluaran(this.dataset.id, this.dataset.keperluan, this.dataset.kategori, this.dataset.tanggal, this.dataset.nominal, this.dataset.metode, this.dataset.catatan)"
+                      title="Edit Transaksi">
+                      <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                    <button type="button" data-id="{{ item.id }}" data-keterangan="{{ item.keterangan }}"
+                      data-nominal="Rp {{ fmt_nominal }}"
+                      onclick="openDeleteModal(this.dataset.id, this.dataset.keterangan, this.dataset.nominal)"
+                      title="Hapus Transaksi">
+                      <span class="material-symbols-outlined text-[18px] text-rose-600">delete_outline</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <!-- EMPTY STATE KETIKA DATABASE MASIH KOSONG -->
+              <tr id="rowEmptyState">
+                <td colspan="7" class="py-16 px-4 text-center">
+                  <div class="flex flex-col items-center justify-center max-w-md mx-auto">
+                    <div
+                      class="w-16 h-16 rounded-2xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center mb-4 border border-sky-100 shadow-sm">
+                      <span class="material-symbols-outlined text-[32px]">payments</span>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-1">ayo catat pengeluaran kas sekarang !
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-6 leading-relaxed">
+                      Belum ada transaksi pengeluaran kas yang tercatat di database. Mulai catat belanja kebutuhan
+                      kelas, ATK, konsumsi, kebersihan, atau operasional lainnya agar seluruh keuangan tetap transparan.
+                    </p>
+                    <div class="flex items-center gap-3">
+                      <button type="button" onclick="openModalCatatPengeluaran()"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white text-xs font-semibold rounded-xl shadow-sm transition-all active:scale-95">
+                        <span class="material-symbols-outlined text-[18px]">add</span>
+                        <span>Catat Pengeluaran Baru</span>
+                      </button>
+                      <a href="{{ url_for('penagihankas') }}"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl transition-all">
+                        <span class="material-symbols-outlined text-[18px]">fact_check</span>
+                        <span>Lihat Penagihan Kas</span>
+                      </a>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              <tr id="rowNoFilterResult" class="hidden">
+                <td colspan="7" class="py-12 px-4 text-center">
+                  <div class="flex flex-col items-center justify-center max-w-sm mx-auto">
+                    <span class="material-symbols-outlined text-[28px] text-slate-400 mb-2">search_off</span>
+                    <p class="text-xs font-medium text-slate-500">Tidak ada data pengeluaran yang cocok dengan filter
+                      atau kata kunci pencarian.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Info -->
+        <div
+          class="pt-4 mt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <p class="">Menampilkan <span class="font-bold text-slate-800" id="counterTotalPengeluaran">{{
+              total_transaksi|default(0) }}</span> catatan pengeluaran kelas terdaftar</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: Catat Pengeluaran Kas Baru         -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 opacity-0 pointer-events-none hidden"
+    id="modal-catat-pengeluaran" onclick="if(event.target === this) closeModalCatatPengeluaran()">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] transform transition-all duration-300 scale-95"
+      id="modalCatatContent" onclick="event.stopPropagation()">
+      <!-- Header Pop-up -->
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">payments</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">Catat Pengeluaran Kas</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Catat transaksi arus keluar uang kas kelas ke database.</p>
+          </div>
+        </div>
+        <button aria-label="Tutup Modal"
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors cursor-pointer"
+          onclick="closeModalCatatPengeluaran()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Form Input Pengeluaran (Terkoneksi langsung ke Backend Flask) -->
+      <form class="p-6 space-y-4 overflow-y-auto" id="formPengeluaran" action="{{ url_for('pengeluarankas_tambah') }}"
+        method="POST">
+        <!-- 1. Keperluan / Keterangan Pengeluaran -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputKeperluan">
+            Keperluan / Keterangan Pengeluaran <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">description</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="inputKeperluan" name="keperluan" placeholder="" required
+              type="text">
+          </div>
+        </div>
+
+        <!-- 2. Kategori Pengeluaran & Nominal Pengeluaran -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputKategori">
+              Kategori Pengeluaran <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">category</span>
+              <select
+                class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all appearance-none cursor-pointer"
+                id="inputKategori" name="kategori">
+                <option value="ATK &amp; Perlengkapan" selected>ATK &amp; Perlengkapan</option>
+                <option value="Kebersihan">Kebersihan</option>
+                <option value="Konsumsi &amp; Snack">Konsumsi &amp; Snack</option>
+                <option value="Fotokopi &amp; Modul">Fotokopi &amp; Modul</option>
+                <option value="Kesehatan / P3K">Kesehatan / P3K</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+              <span
+                class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputNominal">
+              Nominal Pengeluaran (Rp) <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold font-label-md">Rp</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 font-label-md focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="inputNominal" name="nominal" min="1" placeholder="45.000" required type="text">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Tanggal Pengeluaran -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="inputTanggal">
+            Tanggal Pengeluaran <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">calendar_today</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 font-label-md focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="inputTanggal" name="tanggal" type="date" value="{{ today_str }}" required>
+          </div>
+        </div>
+
+        <!-- 4. Metode Pembayaran -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+            Metode Pembayaran <span class="text-rose-500">*</span>
+          </label>
+          <div class="grid grid-cols-3 gap-2 sm:gap-3">
+            <label
+              class="flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer bg-slate-50/60 hover:bg-slate-100/80 transition-all has-[:checked]:border-[#0066C0] has-[:checked]:bg-sky-50/60 has-[:checked]:text-[var(--np-navy-mid)]">
+              <input checked class="text-[var(--np-navy-mid)] focus:ring-[#0066C0]" name="metode_pembayaran" type="radio"
+                value="Kas Tunai">
+              <span class="text-xs font-semibold text-slate-700">Kas Tunai</span>
+            </label>
+            <label
+              class="flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer bg-slate-50/60 hover:bg-slate-100/80 transition-all has-[:checked]:border-[#0066C0] has-[:checked]:bg-sky-50/60 has-[:checked]:text-[var(--np-navy-mid)]">
+              <input class="text-[var(--np-navy-mid)] focus:ring-[#0066C0]" name="metode_pembayaran" type="radio"
+                value="Transfer Bank">
+              <span class="text-xs font-semibold text-slate-700">Transfer</span>
+            </label>
+            <label
+              class="flex items-center justify-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer bg-slate-50/60 hover:bg-slate-100/80 transition-all has-[:checked]:border-[#0066C0] has-[:checked]:bg-sky-50/60 has-[:checked]:text-[var(--np-navy-mid)]">
+              <input class="text-[var(--np-navy-mid)] focus:ring-[#0066C0]" name="metode_pembayaran" type="radio" value="QRIS Kas">
+              <span class="text-xs font-semibold text-slate-700">QRIS</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 5. Catatan Tambahan -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="inputCatatan">
+            Catatan / Penanggung Jawab (Opsional)
+          </label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-3 text-slate-400 text-[18px]">notes</span>
+            <textarea
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all resize-none"
+              id="inputCatatan" name="catatan" placeholder=""
+              rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Tombol Aksi Modal -->
+        <div class="pt-4 border-t border-slate-100 bg-white flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all shrink-0 cursor-pointer"
+            onclick="closeModalCatatPengeluaran()" type="button">
+            Batal
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>Simpan Catatan Pengeluaran</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: Bukti / Detail Struk Nota Kas      -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalDetailBackdrop" onclick="if(event.target === this) closeModalDetail()">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl border border-slate-100 shadow-2xl overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[90vh] scale-95"
+      id="modalDetailContent" onclick="event.stopPropagation()">
+      <!-- Header Modal -->
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-9 h-9 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100">
+            <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+          </div>
+          <h2 class="text-base font-bold text-slate-900">Bukti Pengeluaran Kas</h2>
+        </div>
+        <button aria-label="Tutup"
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors cursor-pointer"
+          onclick="closeModalDetail()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Isi Slip Bukti Kas -->
+      <div class="p-6 flex flex-col items-center bg-white" id="receiptPrintArea">
+        <div class="w-full border border-slate-200 rounded-2xl p-5 bg-slate-50/60 flex flex-col items-center">
+          <div
+            class="w-12 h-12 bg-sky-50 text-[var(--np-navy-mid)] rounded-lg flex items-center justify-center mb-2 border border-sky-100"
+            id="detailAvatar">
+            <span class="material-symbols-outlined text-[24px]">payments</span>
+          </div>
+          <h3 class="text-base font-bold text-slate-800 text-center" id="detailJudul">Pembelian ATK</h3>
+          <p class="text-xs text-slate-400 mt-0.5" id="detailRef">Ref: #KAS-OUT-001</p>
+
+          <div class="w-full my-3 border-t border-dashed border-slate-300"></div>
+
+          <div class="w-full space-y-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Kategori:</span>
+              <span class="font-semibold text-slate-800" id="detailKategori">ATK Kelas</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Tanggal Transaksi:</span>
+              <span class="font-semibold text-slate-800" id="detailTanggal">14 Feb 2026</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Metode Pembayaran:</span>
+              <span class="font-semibold text-slate-800" id="detailMetode">Kas Tunai</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Status Pembukuan:</span>
+              <span class="font-semibold text-emerald-600 flex items-center gap-1">
+                Lunas
+              </span>
+            </div>
+            <div>
+              <span class="text-slate-400 block mb-0.5">Catatan / Keterangan:</span>
+              <p class="font-medium text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200/70"
+                id="detailCatatan">
+                -
+              </p>
+            </div>
+          </div>
+
+          <div class="w-full my-3 border-t border-dashed border-slate-300"></div>
+
+          <div class="w-full flex justify-between items-center text-sm pt-1">
+            <span class="font-bold text-slate-700">Total Nominal:</span>
+            <span class="text-lg font-bold text-rose-600" id="detailNominal">Rp 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tombol Cetak / Unduh -->
+      <div class="p-6 pt-0 bg-white flex items-center justify-center gap-3">
+        <button
+          class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all"
+          onclick="closeModalDetail()" type="button">
+          Tutup
+        </button>
+        <button
+          class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-xs font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+          onclick="cetakBuktiNota()" type="button">
+          <span class="material-symbols-outlined text-[16px]">print</span>
+          <span>Cetak Slip</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: Konfirmasi Hapus Pengeluaran       -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 transition-all duration-200 hidden opacity-0 pointer-events-none"
+    id="deleteConfirmModal" onclick="if(event.target === this) closeDeleteModal()">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 p-6 flex flex-col items-center text-center transform transition-all duration-200 scale-95"
+      id="deleteModalCard" onclick="event.stopPropagation()">
+      <div
+        class="w-12 h-12 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center mb-4 border border-rose-100 shadow-sm">
+        <span class="material-symbols-outlined text-[26px]">delete_forever</span>
+      </div>
+      <h3 class="text-lg font-bold text-slate-900 mb-2">Hapus Catatan Pengeluaran?</h3>
+      <p class="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
+        Apakah Anda yakin ingin menghapus catatan pengeluaran <strong class="text-slate-800 font-semibold"
+          id="deleteItemName">-</strong> sebesar <strong class="text-rose-600 font-semibold"
+          id="deleteItemAmount">-</strong>? Tindakan ini akan menghapus data dari database kas.
+      </p>
+      <form id="formHapusPengeluaran" method="POST" action="" class="w-full grid grid-cols-2 gap-3">
+        <button
+          class="w-full py-2.5 px-4 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+          onclick="closeDeleteModal()" type="button">
+          Batal
+        </button>
+        <button
+          class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-5 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-colors cursor-pointer"
+          type="submit">
+          <span class="material-symbols-outlined text-[18px]">delete</span>
+          <span>Ya, Hapus</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 4: Ringkasan & Unduh Laporan PDF      -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalLaporanBackdrop" onclick="if(event.target === this) closeModalLaporan()">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl border border-slate-100 shadow-2xl overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[90vh] scale-95"
+      id="modalLaporanContent" onclick="event.stopPropagation()">
+      <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100">
+            <span class="material-symbols-outlined text-[22px]">picture_as_pdf</span>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 leading-snug">Laporan Pembukuan Kas</h2>
+            <p class="text-xs text-slate-500">Cetak atau ekspor rekapitulasi pengeluaran kas kelas.</p>
+          </div>
+        </div>
+        <button
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors cursor-pointer"
+          onclick="closeModalLaporan()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-4 bg-white text-sm">
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/70 space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Total Transaksi Pengeluaran:</span>
+            <span class="font-bold text-slate-800">{{ total_transaksi|default(0) }} Catatan</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Total Pengeluaran Kas:</span>
+            <span class="font-bold text-rose-600">Rp {{ "{:,.0f}".format(total_pengeluaran|default(0)).replace(',', '.')
+              }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Total Kas Masuk Terkumpul:</span>
+            <span class="font-bold text-emerald-600">Rp {{ "{:,.0f}".format(total_kas_masuk|default(0)).replace(',',
+              '.') }}</span>
+          </div>
+          <div class="flex justify-between border-t border-slate-200/60 pt-2 font-semibold">
+            <span class="text-slate-700">Sisa Saldo Kas Aktif:</span>
+            <span class="text-slate-900">Rp {{ "{:,.0f}".format(saldo_kas_aktif|default(0)).replace(',', '.') }}</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Gunakan tombol cetak di bawah ini untuk mencetak langsung laporan ini ke printer atau menyimpannya sebagai
+          file PDF melalui opsi <em>Save as PDF</em> pada peramban Anda.
+        </p>
+      </div>
+      <div class="p-6 pt-0 bg-white flex items-center justify-end gap-3">
+        <button
+          class="px-5 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+          onclick="closeModalLaporan()" type="button">
+          Tutup
+        </button>
+        <button
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white text-xs font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+          onclick="window.print()" type="button">
+          <span class="material-symbols-outlined text-[16px]">print</span>
+          <span>Cetak / Simpan PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 5: Edit Catatan Pengeluaran Kas       -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 sm:p-6 transition-all duration-300 opacity-0 pointer-events-none hidden"
+    id="modalEditPengeluaran" onclick="if(event.target === this) closeModalEditPengeluaran()">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] transform transition-all duration-300 scale-95"
+      id="modalEditContent" onclick="event.stopPropagation()">
+      <!-- Header Pop-up -->
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">edit</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800 tracking-tight">Edit Catatan Pengeluaran</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Perbarui data atau perbaiki nominal pengeluaran kas.</p>
+          </div>
+        </div>
+        <button aria-label="Tutup"
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl p-2 transition-colors cursor-pointer"
+          onclick="closeModalEditPengeluaran()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Form Edit Pengeluaran -->
+      <form action="" class="p-6 overflow-y-auto space-y-4 text-left" id="formEditPengeluaran" method="POST">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="editKeperluan">
+            Keperluan / Nama Pengeluaran <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">shopping_cart</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="editKeperluan" name="keperluan" required type="text">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="editKategori">
+              Kategori <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">category</span>
+              <select
+                class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all appearance-none cursor-pointer"
+                id="editKategori" name="kategori">
+                <option value="ATK &amp; Perlengkapan">ATK &amp; Perlengkapan</option>
+                <option value="Kebersihan">Kebersihan</option>
+                <option value="Konsumsi &amp; Snack">Konsumsi &amp; Snack</option>
+                <option value="Fotokopi &amp; Modul">Fotokopi &amp; Modul</option>
+                <option value="Kesehatan / P3K">Kesehatan / P3K</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+              <span
+                class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">expand_more</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="editNominal">
+              Nominal (Rp) <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold font-label-md">Rp</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 font-label-md focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="editNominal" name="nominal" min="1" required type="text">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="editTanggal">
+            Tanggal Pengeluaran <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">calendar_today</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 font-label-md focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="editTanggal" name="tanggal" type="date" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="editMetode">
+            Metode Pembayaran <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">payments</span>
+            <select
+              class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all appearance-none cursor-pointer"
+              id="editMetode" name="metode_pembayaran">
+              <option value="Kas Tunai">Kas Tunai</option>
+              <option value="Transfer Bank">Transfer Bank</option>
+              <option value="QRIS Kas">QRIS Kas</option>
+            </select>
+            <span
+              class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">expand_more</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="editCatatan">
+            Catatan / Penanggung Jawab (Opsional)
+          </label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-3 text-slate-400 text-[18px]">notes</span>
+            <textarea
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all resize-none"
+              id="editCatatan" name="catatan" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 bg-white flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all shrink-0 cursor-pointer"
+            onclick="closeModalEditPengeluaran()" type="button">
+            Batal
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // ==========================================
+    // Auto-Dismiss Flash Messages
+    // ==========================================
+    setTimeout(() => {
+      const flashList = document.querySelectorAll('.flash-toast');
+      flashList.forEach(el => {
+        el.classList.add('opacity-0', 'translate-y-[-10px]');
+        setTimeout(() => el.remove(), 300);
+      });
+    }, 4000);
+
+    // ==========================================
+    // Floating Action Button Toggle
+    // ==========================================
+    function toggleFabMenu() {
+      const menu = document.getElementById('fabMenu');
+      const icon = document.getElementById('fabIcon');
+      if (!menu || !icon) return;
+      const isOpen = !menu.classList.contains('pointer-events-none');
+      if (isOpen) {
+        closeFabMenu();
+      } else {
+        openFabMenu();
+      }
+    }
+
+    function openFabMenu() {
+      const menu = document.getElementById('fabMenu');
+      const icon = document.getElementById('fabIcon');
+      if (!menu || !icon) return;
+      menu.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+      menu.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+      icon.style.transform = 'rotate(45deg)';
+    }
+
+    function closeFabMenu() {
+      const menu = document.getElementById('fabMenu');
+      const icon = document.getElementById('fabIcon');
+      if (!menu || !icon) return;
+      menu.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+      menu.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+      icon.style.transform = 'rotate(0deg)';
+    }
+
+    function fabActionCatatPengeluaran() {
+      closeFabMenu();
+      openModalCatatPengeluaran();
+    }
+
+    document.addEventListener('click', function (e) {
+      const fab = document.getElementById('fabContainer');
+      const menu = document.getElementById('fabMenu');
+      if (fab && menu && !fab.contains(e.target) && !menu.classList.contains('pointer-events-none')) {
+        closeFabMenu();
+      }
+    });
+
+    // ==========================================
+    // Modal Catat Pengeluaran
+    // ==========================================
+    function openModalCatatPengeluaran() {
+      const modal = document.getElementById('modal-catat-pengeluaran');
+      const content = document.getElementById('modalCatatContent');
+      if (modal && content) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          modal.classList.add('opacity-100', 'pointer-events-auto');
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+          const inputKeperluan = document.getElementById('inputKeperluan');
+          if (inputKeperluan) inputKeperluan.focus();
+        }, 150);
+      }
+    }
+
+    function closeModalCatatPengeluaran() {
+      const modal = document.getElementById('modal-catat-pengeluaran');
+      const content = document.getElementById('modalCatatContent');
+      if (modal && content) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    // ==========================================
+    // Modal Detail / Bukti Nota
+    // ==========================================
+    function openModalDetail(id, judul, kategori, tanggal, nominal, metode, catatan, inisial) {
+      const b = document.getElementById('modalDetailBackdrop');
+      const c = document.getElementById('modalDetailContent');
+
+      document.getElementById('detailJudul').textContent = judul || '-';
+      document.getElementById('detailRef').textContent = 'Ref: #KAS-OUT-' + (String(id).padStart(3, '0'));
+      document.getElementById('detailKategori').textContent = kategori || '-';
+      document.getElementById('detailTanggal').textContent = tanggal || '-';
+      document.getElementById('detailNominal').textContent = nominal || 'Rp 0';
+      document.getElementById('detailMetode').textContent = metode || 'Kas Tunai';
+      document.getElementById('detailCatatan').textContent = catatan && catatan.trim() !== '' ? catatan : 'Tidak ada catatan tambahan.';
+
+      if (b && c) {
+        b.classList.remove('hidden');
+        setTimeout(() => {
+          b.classList.remove('opacity-0', 'pointer-events-none');
+          b.classList.add('opacity-100', 'pointer-events-auto');
+          c.classList.remove('scale-95');
+          c.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalDetail() {
+      const b = document.getElementById('modalDetailBackdrop');
+      const c = document.getElementById('modalDetailContent');
+      if (b && c) {
+        b.classList.remove('opacity-100', 'pointer-events-auto');
+        b.classList.add('opacity-0', 'pointer-events-none');
+        c.classList.remove('scale-100');
+        c.classList.add('scale-95');
+        setTimeout(() => {
+          b.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    function cetakBuktiNota() {
+      window.print();
+    }
+
+    // ==========================================
+    // Modal Hapus Transaksi (Konfirmasi ke Database)
+    // ==========================================
+    function openDeleteModal(transId, title, amount) {
+      const modal = document.getElementById('deleteConfirmModal');
+      const card = document.getElementById('deleteModalCard');
+      const nameEl = document.getElementById('deleteItemName');
+      const amountEl = document.getElementById('deleteItemAmount');
+      const form = document.getElementById('formHapusPengeluaran');
+
+      if (nameEl) nameEl.textContent = title;
+      if (amountEl) amountEl.textContent = amount;
+      if (form) form.action = '/pengeluarankas/hapus/' + transId;
+
+      if (modal && card) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          modal.classList.add('opacity-100', 'pointer-events-auto');
+          card.classList.remove('scale-95');
+          card.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeDeleteModal() {
+      const modal = document.getElementById('deleteConfirmModal');
+      const card = document.getElementById('deleteModalCard');
+      if (modal && card) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        card.classList.remove('scale-100');
+        card.classList.add('scale-95');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    // ==========================================
+    // Modal Laporan
+    // ==========================================
+    function openModalLaporan() {
+      const b = document.getElementById('modalLaporanBackdrop');
+      const c = document.getElementById('modalLaporanContent');
+      if (b && c) {
+        b.classList.remove('hidden');
+        setTimeout(() => {
+          b.classList.remove('opacity-0', 'pointer-events-none');
+          b.classList.add('opacity-100', 'pointer-events-auto');
+          c.classList.remove('scale-95');
+          c.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalLaporan() {
+      const b = document.getElementById('modalLaporanBackdrop');
+      const c = document.getElementById('modalLaporanContent');
+      if (b && c) {
+        b.classList.remove('opacity-100', 'pointer-events-auto');
+        b.classList.add('opacity-0', 'pointer-events-none');
+        c.classList.remove('scale-100');
+        c.classList.add('scale-95');
+        setTimeout(() => {
+          b.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    // ==========================================
+    // Realtime Filter & Search Pengeluaran
+    // ==========================================
+    let currentFilterKategori = 'all';
+
+    function setFilterKategori(kat) {
+      currentFilterKategori = kat;
+      const btnAll = document.getElementById('tabFilterSemua');
+      const btnAtk = document.getElementById('tabFilterAtk');
+      const btnKeb = document.getElementById('tabFilterKebersihan');
+      const btnKon = document.getElementById('tabFilterKonsumsi');
+      const btnFoto = document.getElementById('tabFilterFotokopi');
+
+      [btnAll, btnAtk, btnKeb, btnKon, btnFoto].forEach(btn => {
+        if (btn) btn.className = "px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all";
+      });
+
+      const activeMap = {
+        'all': btnAll,
+        'atk': btnAtk,
+        'kebersihan': btnKeb,
+        'konsumsi': btnKon,
+        'fotokopi': btnFoto
+      };
+
+      if (activeMap[kat]) {
+        activeMap[kat].className = "px-3 py-1.5 text-xs font-semibold bg-white text-slate-900 rounded-lg shadow-sm transition-all";
+      }
+
+      filterPengeluaran();
+    }
+
+    function filterPengeluaran() {
+      const searchVal = (document.getElementById('inputSearchPengeluaran')?.value || '').toLowerCase().trim();
+      const rows = document.querySelectorAll('.pengeluaran-row');
+      const noFilterRow = document.getElementById('rowNoFilterResult');
+      const counter = document.getElementById('counterTotalPengeluaran');
+
+      if (rows.length === 0) return; // Database masih kosong
+
+      let visibleCount = 0;
+      rows.forEach(row => {
+        const name = row.getAttribute('data-name') || '';
+        const kategori = row.getAttribute('data-kategori') || '';
+        const metode = row.getAttribute('data-metode') || '';
+        const catatan = row.getAttribute('data-catatan') || '';
+
+        const matchSearch = name.includes(searchVal) || kategori.includes(searchVal) || metode.includes(searchVal) || catatan.includes(searchVal);
+        const matchKategori = (currentFilterKategori === 'all') || kategori.includes(currentFilterKategori);
+
+        if (matchSearch && matchKategori) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      if (noFilterRow) {
+        if (visibleCount === 0 && searchVal !== '') {
+          noFilterRow.classList.remove('hidden');
+        } else {
+          noFilterRow.classList.add('hidden');
+        }
+      }
+
+      if (counter) {
+        counter.textContent = visibleCount;
+      }
+    }
+
+    // ==========================================
+    // Modal Edit Pengeluaran
+    // ==========================================
+    function openModalEditPengeluaran(id, keperluan, kategori, tanggal, nominal, metode, catatan) {
+      const form = document.getElementById('formEditPengeluaran');
+      if (form) form.action = '/pengeluarankas/edit/' + id;
+
+      const inpKep = document.getElementById('editKeperluan');
+      const inpKat = document.getElementById('editKategori');
+      const inpTgl = document.getElementById('editTanggal');
+      const inpNom = document.getElementById('editNominal');
+      const inpMet = document.getElementById('editMetode');
+      const inpCat = document.getElementById('editCatatan');
+
+      if (inpKep) inpKep.value = keperluan || '';
+      if (inpKat) inpKat.value = kategori || 'ATK & Perlengkapan';
+      if (inpTgl) inpTgl.value = tanggal || '';
+      if (inpNom) inpNom.value = nominal || '';
+      if (inpMet) inpMet.value = metode || 'Kas Tunai';
+      if (inpCat) inpCat.value = (catatan && catatan !== '-') ? catatan : '';
+
+      const modal = document.getElementById('modalEditPengeluaran');
+      const content = document.getElementById('modalEditContent');
+      if (modal && content) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          modal.classList.add('opacity-100', 'pointer-events-auto');
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalEditPengeluaran() {
+      const modal = document.getElementById('modalEditPengeluaran');
+      const content = document.getElementById('modalEditContent');
+      if (modal && content) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    // ==========================================
+    // Shortcut Keyboard (ESC untuk tutup modal)
+    // ==========================================
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeModalCatatPengeluaran();
+        closeModalDetail();
+        closeDeleteModal();
+        closeModalLaporan();
+        closeModalEditPengeluaran();
+        closeFabMenu();
+      }
+    });
+  </script>
+</body>
+</html>

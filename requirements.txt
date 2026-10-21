@@ -1,0 +1,19 @@
+# ==========================================
+# 1. FRAMEWORK UTAMA & EKSTENSI FLASK
+# ==========================================
+Flask==3.1.3                 # Pondasi utama aplikasi web
+Flask-SQLAlchemy==3.1.1      # Jembatan pengelola database
+Flask-Login==0.6.3           # Pengatur akun & sesi login user
+Flask-Mail==0.10.0           # Modul pengirim email tagihan via Gmail
+Flask-APScheduler==1.13.1    # Pengatur jadwal otomatis (reminder & tagihan)
+
+# ==========================================
+# 2. DRIVER DATABASE
+# ==========================================
+PyMySQL==1.2.3               # Penghubung Python ke database MySQL
+
+# ==========================================
+# 3. KONFIGURASI ENVIRONMENT & WAKTU
+# ==========================================
+python-dotenv==1.2.3         # Pembaca data dari file .env
+pytz==2026.5                 # Pengunci zona waktu ke WIB

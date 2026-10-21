@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html class="light" lang="id">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>NusaPay</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* Bypasses cache to ensure tap highlight is removed */
+    * { -webkit-tap-highlight-color: transparent !important; }
+  </style>
+  <script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"],
+            display: ["Inter", "sans-serif"],
+          },
+          colors: {
+            primary: "#0f172a",
+            "primary-light": "#1e293b",
+            accent: "#0ea5e9",
+            "accent-dark": "#0284c7",
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    [data-weight="fill"] { font-variation-settings: 'FILL' 1; }
+    .hover-card-effect { transition: all 0.2s ease; }
+    .soft-shadow { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  </style>
+</head>
+
+<body class="min-h-screen flex relative">
+
+  <!-- Toast Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-md w-full px-4 sm:px-0" id="flashContainer">
+    {% for category, message in messages %}
+    <div
+      class="flash-toast transform transition-all duration-300 flex items-center gap-3 bg-white border border-slate-200 p-4 rounded-2xl shadow-xl shadow-slate-200/50">
+      <div
+        class="w-9 h-9 rounded-xl {% if category == 'success' %}bg-emerald-50 text-emerald-600{% elif category == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-sky-50 text-[var(--np-navy-mid)]{% endif %} flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-[20px]">
+          {% if category == 'success' %}check_circle{% elif category == 'danger' %}error{% else %}info{% endif %}
+        </span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h4 class="text-sm font-bold text-slate-900">
+          {% if category == 'success' %}Berhasil!{% elif category == 'danger' %}Peringatan!{% else %}Pemberitahuan{%
+          endif %}
+        </h4>
+        <p class="text-xs text-slate-500 leading-snug">{{ message }}</p>
+      </div>
+      <button type="button" onclick="this.closest('.flash-toast').remove()"
+        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <!-- SIDEBAR -->
+  <aside
+    class="w-64 min-w-[16rem] bg-white border-r border-slate-100 flex flex-col justify-between p-6 shrink-0 h-screen sticky top-0 hidden md:flex z-40">
+    <div class="flex flex-col flex-1">
+      <div class="mb-6 pb-4 border-b border-slate-100">
+        <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <div class="flex items-center select-none font-bold text-2xl tracking-tight leading-none">
+            <span class="text-slate-900 font-bold -tracking-wider lowercase">nusa</span>
+            <span class="text-[var(--np-navy-mid)] font-bold -tracking-wider lowercase">pay</span>
+            <span class="text-[10px] font-black text-slate-900 ml-0.5 -mt-2 align-top">TM</span>
+          </div>
+        </a>
+      </div>
+      <nav class="flex-1 space-y-1.5">
+        <div class="pt-4 pb-2">
+          <p class="px-3.5 text-xs font-bold text-slate-400 uppercase tracking-wider">Modul Kas</p>
+        </div>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[var(--np-navy-mid)] text-white font-semibold text-sm shadow-sm transition-all"
+          href="{{ url_for('penagihankas') }}">
+          <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+          <span>Dashboard Kas</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
+          href="{{ url_for('pengeluarankas') }}">
+          <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+          <span>Pengeluaran Kas</span>
+        </a>
+        <a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all"
+          href="{{ url_for('pengaturan') }}">
+          <span class="material-symbols-outlined text-[20px]">settings</span>
+          <span>Pengaturan</span>
+        </a>
+      </nav>
+    </div>
+    <!-- User Profile & Keluar/Ganti Akun -->
+    <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <div class="w-8 h-8 rounded-full bg-blue-100 text-[#00529C] font-bold text-xs flex items-center justify-center shrink-0">
+          {{ (session.get('user_name') or 'B')[:1]|upper }}
+        </div>
+        <div class="truncate">
+          <p class="text-xs font-bold text-slate-800 truncate">{{ session.get('user_name', 'Bendahara') }}</p>
+          <p class="text-[10px] text-slate-400 capitalize">{{ session.get('user_role', 'Bendahara') }}</p>
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" title="Keluar / Ganti Akun" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all flex items-center justify-center cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTAINER -->
+  <div class="flex-1 flex flex-col w-full min-w-0">
+    <main class="flex-1 p-4 sm:p-8 pb-24 overflow-y-auto max-w-7xl w-full mx-auto">
+      <!-- Header Title & QRIS Button -->
+      <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 mb-2">
+            <span class="text-slate-400">Kas & Keuangan</span>
+            <span class="text-slate-300">/</span>
+            <span class="text-[var(--np-navy-mid)] font-semibold text-slate-600">Penagihan Iuran Kas</span>
+            {% if buku and buku.nama %}
+            <span class="text-slate-300">/</span>
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-100 text-[#00529C] border border-sky-200">{{ buku.nama }}</span>
+            {% endif %}
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight leading-tight">Penagihan Iuran Kas</h1>
+            {% if buku and buku.nama %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-[#00529C] border border-blue-200/80 shadow-2xs">
+              <span class="material-symbols-outlined text-[15px]">school</span>
+              <span>Kelas: {{ buku.nama }}</span>
+            </span>
+            {% endif %}
+          </div>
+          <p class="text-[12px] text-slate-400 mt-1 leading-relaxed">Kelola status penagihan iuran siswa untuk pencatatan <strong>{{ buku.nama if buku else 'Kas' }}</strong>, pantau pembayaran, dan kirim pengingat otomatis.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div
+            class="hidden sm:flex flex-col text-right bg-white px-3.5 py-1.5 rounded-xl border border-slate-200/80 shadow-xs">
+            <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Saldo Kas Aktif</span>
+            <span class="text-xs font-bold text-slate-800">Rp {{
+              "{:,.0f}".format(saldo_kas_aktif|default(0)).replace(',', '.') }}</span>
+          </div>
+          <button onclick="openModalRiwayatKasMasuk()" type="button"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition-all shadow-sm whitespace-nowrap"
+            id="btnRiwayatMasuk">
+            <span class="material-symbols-outlined text-[20px] text-slate-600">history</span>
+            <span>Riwayat Setoran ({{ riwayat_kas_masuk|length }})</span>
+          </button>
+          <button onclick="openModalQris()" type="button"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition-all shadow-sm whitespace-nowrap"
+            id="btnOpenQris">
+            <span class="material-symbols-outlined text-[20px] text-slate-600">qr_code_2</span>
+            <span>QRIS Kas</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Switch Tab: Pengeluaran Kas vs Penagihan Iuran Kas -->
+      <div class="mb-6 flex items-center justify-between">
+        <div class="w-full flex items-center bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-sm gap-1.5">
+          <a href="{{ url_for('pengeluarankas') }}"
+            class="flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50">
+            <span class="material-symbols-outlined text-[18px]">payments</span>
+            <span>Pengeluaran Kas</span>
+          </a>
+          <a href="{{ url_for('penagihankas') }}"
+            class="flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 bg-[var(--np-navy-mid)] text-white shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">fact_check</span>
+            <span>Penagihan Iuran Kas</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- NOTIFIKASI KONFIRMASI PEMBAYARAN DARI SISWA (DARI TOMBOL PESAN GMAIL) -->
+      {% if konfirmasi_pending_list %}
+      <div class="mb-6 bg-gradient-to-br from-blue-50/80 via-white to-emerald-50/50 border-2 border-blue-200/90 rounded-3xl p-5 sm:p-6 shadow-md shadow-blue-500/5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-blue-100">
+          <div class="flex items-center gap-3">
+            <div class="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-[#00529C] text-white shadow-sm">
+              <span class="material-symbols-outlined text-[22px]">notifications_active</span>
+              <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+              </span>
+            </div>
+            <div>
+              <h2 class="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Konfirmasi Pembayaran Siswa</span>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#00529C] text-white shadow-xs">{{ konfirmasi_pending_list|length }} Menunggu</span>
+              </h2>
+              <p class="text-xs text-slate-500 mt-0.5">Siswa telah mengeklik tombol respon di pesan Gmail. Klik <strong>Konfirmasi & Kurangi Tagihan</strong> untuk memverifikasi.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- DAFTAR KARTU KONFIRMASI PENDING -->
+        <div class="mt-4 space-y-3">
+          {% for item in konfirmasi_pending_list %}
+          <div class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-xs hover:border-blue-300 transition-all">
+            
+            <!-- Info Siswa & Status Pembayaran -->
+            <div class="flex-1 min-w-0 space-y-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-slate-900 text-sm sm:text-base">{{ item.siswa.nama }}</span>
+                <span class="px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">{{ item.siswa.kelas }}</span>
+                
+                {% if item.tipe == 'sudah_bayar' %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Lapor: Sudah Bayar Rp {{ "{:,.0f}".format(item.nominal_bayar|default(0)).replace(',', '.') }}
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  <span class="material-symbols-outlined text-[14px]">hourglass_empty</span>
+                  Lapor: Belum Bisa Bayar
+                </span>
+                {% endif %}
+
+                <span class="text-[11px] text-slate-400">
+                  • {{ item.created_at.strftime('%d/%m/%Y %H:%M') if item.created_at else 'Baru saja' }}
+                </span>
+              </div>
+
+              <!-- Rincian Tagihan Siswa Saat Ini -->
+              <div class="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+                <span>Total Tagihan: <strong>Rp {{ "{:,.0f}".format(item.siswa.tagihan).replace(',', '.') }}</strong></span>
+                <span>Sudah Dibayar: <strong class="text-emerald-600">Rp {{ "{:,.0f}".format(item.siswa.sudah_bayar or 0).replace(',', '.') }}</strong></span>
+                <span>Sisa Tagihan Saat Ini: <strong class="text-[#00529C]">Rp {{ "{:,.0f}".format(item.siswa.sisa).replace(',', '.') }}</strong></span>
+              </div>
+
+              <!-- Pesan atau Alasan Siswa -->
+              {% if item.pesan_siswa %}
+              <div class="bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2 text-xs text-slate-700 italic flex items-start gap-2">
+                <span class="material-symbols-outlined text-[16px] text-slate-400 shrink-0 mt-0.5">chat</span>
+                <span class="break-words">"{{ item.pesan_siswa }}"</span>
+              </div>
+              {% endif %}
+
+              <!-- Bukti Transfer (Jika Diunggah Siswa) -->
+              {% if item.bukti_transfer %}
+              <div>
+                <a href="{{ url_for('static', filename='uploads/' ~ item.bukti_transfer) }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-[#00529C] hover:text-blue-700 font-bold bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 transition-colors">
+                  <span class="material-symbols-outlined text-[16px]">image</span>
+                  <span>Lihat Foto Bukti Transfer / Resi</span>
+                  <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                </a>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Tombol Aksi Verifikasi Bendahara -->
+            <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
+              {% if item.tipe == 'sudah_bayar' %}
+              <!-- Tombol Konfirmasi Terima & Kurangi Tagihan -->
+              <form method="POST" action="{{ url_for('penagihan_konfirmasi_terima', konfirmasi_id=item.id) }}">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+                  <span class="material-symbols-outlined text-[18px]">verified</span>
+                  <span>Konfirmasi & Kurangi Tagihan</span>
+                </button>
+              </form>
+              <!-- Tombol Tolak / Belum Masuk -->
+              <form method="POST" action="{{ url_for('penagihan_konfirmasi_tolak', konfirmasi_id=item.id) }}">
+                <button type="submit" onclick="return confirm('Tolak konfirmasi ini? Siswa akan tetap tercatat belum lunas.')" class="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50 text-xs font-semibold transition-all cursor-pointer" title="Tolak jika uang belum masuk ke rekening/kas">
+                  <span class="material-symbols-outlined text-[16px]">close</span>
+                  <span>Tolak</span>
+                </button>
+              </form>
+              {% else %}
+              <!-- Belum Bisa Bayar: Tandai Sudah Dibaca -->
+              <form method="POST" action="{{ url_for('penagihan_konfirmasi_tolak', konfirmasi_id=item.id) }}">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs shadow-sm transition-all cursor-pointer">
+                  <span class="material-symbols-outlined text-[18px]">done_all</span>
+                  <span>Tandai Sudah Dibaca</span>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Ringkasan Statistik 4 Kartu Metrik (Dinamis Berdasarkan Data Database) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- 1. Total Terkumpul -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-sky-50 text-[var(--np-navy-mid)] rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+            </div>
+            <span class="text-xs text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg font-bold border border-sky-100/60">
+              {{ persen_tercapai|default(0) }}% Tercapai
+            </span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Total Terkumpul</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Rp {{
+              "{:,.0f}".format(total_terkumpul|default(0)).replace(',', '.') }}</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1">Target: Rp {{
+              "{:,.0f}".format(total_target|default(0)).replace(',', '.') }}</p>
+          </div>
+        </div>
+
+        <!-- 2. Sudah Membayar / Lunas -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-[#e8f5e9] text-[#2e7d32] rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">check_circle</span>
+            </div>
+            <span
+              class="text-xs text-[#2e7d32] bg-[#e8f5e9] px-2.5 py-1 rounded-lg font-bold border border-emerald-100">
+              {{ total_lunas|default(0) }} Siswa
+            </span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Sudah Membayar / Lunas</p>
+            <h3 class="text-2xl font-bold text-[#2e7d32] tracking-tight">{{ total_lunas|default(0) }} Siswa</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1">
+              {% if total_lunas > 0 %}Terverifikasi otomatis{% else %}Belum ada pelunasan{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Belum Membayar / Lunas -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-[#ffebee] text-[#c62828] rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">pending</span>
+            </div>
+            <span class="text-xs text-[#c62828] bg-[#ffebee] px-2.5 py-1 rounded-lg font-bold border border-rose-100">
+              {{ total_belum_lunas|default(0) }} Siswa
+            </span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Belum Membayar / Lunas</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">{{ total_belum_lunas|default(0) }} Siswa</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1">
+              {% if total_belum_lunas > 0 %}Perlu ditagih bulan ini{% else %}Semua siswa lunas{% endif %}
+            </p>
+          </div>
+        </div>
+
+        <!-- 4. Sisa Tagihan -->
+        <div
+          class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover-card-effect flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 bg-sky-50 text-[var(--np-navy-mid)] rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-[22px]">info</span>
+            </div>
+            <span class="text-xs text-[var(--np-navy-mid)] bg-sky-50 px-2.5 py-1 rounded-lg font-bold border border-sky-100">Sisa
+              Tagihan</span>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500 mb-1">Total Belum Lunas</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Rp {{
+              "{:,.0f}".format(total_sisa|default(0)).replace(',', '.') }}</h3>
+            <p class="text-xs font-medium text-slate-400 mt-1">{{ total_belum_lunas|default(0) }} Siswa Belum Lunas</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOKEN KAS KELAS -->
+      {% set portal_token = (buku.token if (buku and buku.token) else (tagihan_kas.token if (tagihan_kas and tagihan_kas.token) else '')) %}
+      {% if portal_token %}
+      <div class="mb-6 bg-gradient-to-r from-[#003B73] via-[#00529C] to-[#0073CF] rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <!-- Hidden activeJudulText for script compatibility -->
+        <span id="activeJudulText" class="hidden">{{ buku.nama if buku else (tagihan_kas.judul if tagihan_kas else 'Kas Organisasi') }}</span>
+
+        <!-- Informasi Buku Kas & Token -->
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0 shadow-xs">
+            <span class="material-symbols-outlined text-[22px] text-yellow-300">vpn_key</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs uppercase font-extrabold tracking-wider text-blue-200">Token Akses Kas</span>
+              <span class="text-xs text-white/40">•</span>
+              <span class="text-xs font-semibold text-white/90">{{ buku.nama if buku else 'Kas Kelas' }}</span>
+            </div>
+            <p class="text-xs text-blue-100/90 mt-0.5 leading-snug">
+              Bagikan token ini ke siswa/wali untuk mengecek rincian tagihan kas secara mandiri di halaman beranda.
+            </p>
+          </div>
+        </div>
+
+        <!-- Box Token dengan Tombol Salin -->
+        <div class="flex items-center gap-3 bg-white/15 hover:bg-white/20 border border-white/25 backdrop-blur-md px-4 py-2 rounded-xl transition-all shrink-0 self-stretch sm:self-auto justify-between sm:justify-start">
+          <div class="flex flex-col">
+            <span class="text-[9px] uppercase font-bold tracking-wider text-blue-200">Kode Token</span>
+            <span id="activeTokenText" class="font-mono text-base font-black tracking-wider text-yellow-300">{{ portal_token }}</span>
+          </div>
+          <button type="button" onclick="salinText('{{ portal_token }}', 'Token')" title="Salin Token" class="p-2 hover:bg-white/25 rounded-lg text-white/90 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold">
+            <span class="material-symbols-outlined text-[18px]">content_copy</span>
+            <span class="text-xs">Salin</span>
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Data Siswa & Tabel Penagihan -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
+        <!-- Toolbar Pencarian & Filter & Aksi -->
+        <div class="flex flex-col gap-3.5 pb-5 border-b border-slate-100">
+          
+          <!-- Baris 1: Pencarian & Filter Tabs Status -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <!-- Input Pencarian -->
+            <div class="relative w-full sm:w-80 md:w-96">
+              <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#0066C0] focus:bg-white text-slate-900 transition-all placeholder:text-slate-400"
+                placeholder="Cari nama, NIS, kelas..." type="text" id="inputSearchSiswa" oninput="filterSiswa()">
+            </div>
+
+            <!-- Filter Tabs Status -->
+            <div class="inline-flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shrink-0 self-start sm:self-auto">
+              <button type="button" id="tabFilterSemua" onclick="setFilterStatus('all')"
+                class="px-3.5 py-1.5 text-xs font-bold bg-white text-slate-900 rounded-lg shadow-xs transition-all cursor-pointer">Semua</button>
+              <button type="button" id="tabFilterLunas" onclick="setFilterStatus('lunas')"
+                class="px-3.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 rounded-lg transition-all cursor-pointer">Lunas</button>
+              <button type="button" id="tabFilterBelum" onclick="setFilterStatus('belum')"
+                class="px-3.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 rounded-lg transition-all cursor-pointer">Belum Lunas</button>
+            </div>
+          </div>
+
+          <!-- Baris 2: Informasi Ringkas & Barisan Tombol Aksi -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100/80">
+            <!-- Info Ringkas Siswa -->
+            <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold border border-slate-200/70">
+                <span class="material-symbols-outlined text-[15px] text-[#00529C]">group</span>
+                <span>{{ total_siswa }} Siswa Terdaftar</span>
+              </span>
+              {% if total_belum_lunas and total_belum_lunas > 0 %}
+              <span class="text-rose-600 font-bold">• {{ total_belum_lunas }} Belum Lunas</span>
+              {% else %}
+              <span class="text-emerald-600 font-bold">• Semua Siswa Lunas</span>
+              {% endif %}
+            </div>
+
+            <!-- Tombol Aksi Lengkap -->
+            <div class="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
+              <!-- Ekspor Data -->
+              <a href="{{ url_for('penagihan_ekspor') }}"
+                class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
+                title="Download data Excel / CSV">
+                <span class="material-symbols-outlined text-[16px] text-emerald-600">download</span>
+                <span>Ekspor</span>
+              </a>
+
+              <!-- Kelola Tagihan & Tambah Tagihan Baru -->
+              {% if tagihan_list %}
+              <button type="button" onclick="openModalKelolaTagihan()"
+                class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-[#00529C] border border-blue-200 text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
+                title="Kelola daftar pos tagihan">
+                <span class="material-symbols-outlined text-[16px]">list_alt</span>
+                <span>Tagihan ({{ tagihan_list|length }})</span>
+              </button>
+              {% endif %}
+              <button type="button" onclick="openModal()"
+                class="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
+                title="Buat pos iuran baru">
+                <span class="material-symbols-outlined text-[16px] text-slate-600">post_add</span>
+                <span>Tambah Tagihan</span>
+              </button>
+
+              <!-- Ingatkan Semua Siswa -->
+              <button type="button" onclick="openModalIngatkanSemua()"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold rounded-xl shadow-sm shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
+                title="Kirim pengingat tagihan email ke seluruh siswa yang belum lunas secara serentak">
+                <span class="material-symbols-outlined text-[16px]">campaign</span>
+                <span>Ingatkan Semua</span>
+                {% if total_belum_lunas and total_belum_lunas > 0 %}
+                <span class="px-1.5 py-0.2 rounded-full bg-white/25 text-white text-[10px] font-extrabold">{{ total_belum_lunas }}</span>
+                {% endif %}
+              </button>
+
+              <!-- Tambah Siswa (Primary) -->
+              <button type="button" onclick="openModalSiswa()"
+                class="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">person_add</span>
+                <span>Tambah Siswa</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabel Penagihan -->
+        <div class="overflow-x-auto overflow-y-auto">
+          <table class="w-full text-left border-collapse" id="tableSiswa">
+            <thead class="border-b border-slate-100 bg-slate-50/50 sticky top-0">
+              <tr>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Siswa</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500 font-label-md">ID Siswa
+                </th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Tagihan</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Sudah Bayar</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Sisa</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                <th class="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm" id="tbodySiswa">
+              {% if siswa_list %}
+              {% for siswa in siswa_list %}
+              {% set fmt_tagihan = "{:,.0f}".format(siswa.tagihan|default(0)).replace(',', '.') %}
+              {% set fmt_bayar = "{:,.0f}".format(siswa.sudah_bayar|default(0)).replace(',', '.') %}
+              {% set fmt_sisa = "{:,.0f}".format(siswa.sisa|default(0)).replace(',', '.') %}
+              {% set is_lunas = (siswa.status.lower() == 'lunas' or siswa.sisa <= 0) %}
+              <tr class="hover:bg-slate-50/70 transition-colors siswa-row"
+                data-name="{{ (siswa.nama or '')|lower }}"
+                data-nis="{{ (siswa.nis or '')|lower }}"
+                data-kelas="{{ (siswa.kelas or '')|lower }}"
+                data-status="{% if is_lunas %}lunas{% else %}belum{% endif %}">
+                <td class="py-4 px-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 rounded-lg {% if is_lunas %}bg-emerald-50 text-emerald-600 border border-emerald-100{% elif siswa.sudah_bayar > 0 %}bg-amber-50 text-amber-600 border border-amber-100{% else %}bg-sky-50 text-[var(--np-navy-mid)] border border-sky-100{% endif %} font-bold text-sm flex items-center justify-center shrink-0">
+                      {{ siswa.inisial }}
+                    </div>
+                    <div>
+                      <p class="font-bold text-slate-800 leading-snug flex items-center gap-1.5 flex-wrap">
+                        <span class="uppercase">{{ siswa.nama }}</span>
+                      </p>
+                      <p class="text-xs text-slate-400">{{ siswa.kelas }}{% if siswa.kontak %} &bull; <span
+                          class="text-slate-500">{{ siswa.kontak }}</span>{% endif %}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-4 px-4 font-label-md text-xs text-slate-500">{{ siswa.nis }}</td>
+                <td class="py-4 px-4 font-semibold text-slate-700">Rp {{ fmt_tagihan }}</td>
+                <td class="py-4 px-4 font-semibold text-emerald-600">Rp {{ fmt_bayar }}</td>
+                <td
+                  class="py-4 px-4 {% if siswa.sisa > 0 %}font-bold text-rose-500{% else %}text-slate-400 font-medium{% endif %}">
+                  Rp {{ fmt_sisa }}
+                </td>
+                <td class="py-4 px-4">
+                  {% if is_lunas %}
+                  <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#e8f5e9] text-[#2e7d32]">
+                    Lunas
+                  </span>
+                  {% elif siswa.sudah_bayar > 0 %}
+                  <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+                    Belum Lunas
+                  </span>
+                  {% else %}
+                  <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#ffebee] text-[#c62828]">
+                    Belum Bayar
+                  </span>
+                  {% endif %}
+                </td>
+                <td class="py-4 px-4 text-right">
+                  <div class="inline-flex items-center justify-end gap-1.5">
+                    {% if not is_lunas %}
+                    <button type="button" data-id="{{ siswa.id }}" data-nama="{{ siswa.nama }}"
+                      data-nis="{{ siswa.nis }}" data-kelas="{{ siswa.kelas }}" data-tagihan="Rp {{ fmt_tagihan }}"
+                      data-bayar="Rp {{ fmt_bayar }}" data-sisa="Rp {{ fmt_sisa }}" data-rawsisa="{{ fmt_sisa }}"
+                      data-inisial="{{ siswa.inisial }}"
+                      onclick="openModalCatatBayar(this.dataset.id, this.dataset.nama, this.dataset.nis, this.dataset.kelas, this.dataset.tagihan, this.dataset.bayar, this.dataset.sisa, this.dataset.rawsisa, this.dataset.inisial)"
+                      class="px-3.5 py-1.5 bg-[var(--np-navy-mid)] text-white hover:bg-[var(--np-navy)] rounded-lg text-xs font-semibold shadow-sm transition-all inline-flex items-center"
+                      title="Catat Setoran Pembayaran">
+                      Catat Bayar
+                    </button>
+                    <button type="button" data-id="{{ siswa.id }}" data-nama="{{ siswa.nama }}"
+                      data-kontak="{{ siswa.kontak or '' }}"
+                      onclick="kirimPengingat(this.dataset.id, this.dataset.nama, this.dataset.kontak)"
+                      class="px-3.5 py-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold shadow-sm transition-all inline-flex items-center"
+                      title="Kirim Pengingat Tagihan via Email Gmail">
+                      Ingatkan Email
+                    </button>
+
+                    {% else %}
+                    <button type="button" data-nama="{{ siswa.nama }}" data-nis="{{ siswa.nis }}"
+                      data-kelas="{{ siswa.kelas }}" data-kontak="{{ siswa.kontak or '' }}"
+                      data-tagihan="Rp {{ fmt_tagihan }}" data-bayar="Rp {{ fmt_bayar }}"
+                      data-inisial="{{ siswa.inisial }}" data-catatan="{{ siswa.catatan or '' }}"
+                      onclick="openDetailSiswa(this.dataset.nama, this.dataset.nis, this.dataset.kelas, this.dataset.kontak, this.dataset.tagihan, this.dataset.bayar, this.dataset.inisial, this.dataset.catatan)"
+                      class="px-3 py-1.5">
+                      <span class="material-symbols-outlined text-[16px]">visibility</span>Detail
+                    </button>
+                    {% endif %}
+                    <button type="button" data-id="{{ siswa.id }}" data-nama="{{ siswa.nama }}"
+                      data-nis="{{ siswa.nis }}" data-kelas="{{ siswa.kelas }}" data-kontak="{{ siswa.kontak or '' }}"
+                      data-wa="{{ siswa.whatsapp_number or '' }}"
+                      data-tagihan="{{ siswa.tagihan|int }}" data-catatan="{{ siswa.catatan or '' }}"
+                      onclick="openModalEditSiswa(this.dataset.id, this.dataset.nama, this.dataset.nis, this.dataset.kelas, this.dataset.kontak, this.dataset.wa, this.dataset.tagihan, this.dataset.catatan)"
+                      title="Edit Data Siswa">
+                      <span class="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                    <button type="button" data-id="{{ siswa.id }}" data-nama="{{ siswa.nama }}"
+                      data-nis="{{ siswa.nis }}"
+                      onclick="openModalHapusSiswa(this.dataset.id, this.dataset.nama, this.dataset.nis)"
+                      title="Hapus Siswa">
+                      <span class="material-symbols-outlined text-[18px] text-rose-600">delete</span>
+                    </button>
+                  </div>
+                </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <!-- EMPTY STATE KETIKA DATABASE MASIH KOSONG -->
+                <tr id="rowEmptyState">
+                  <td colspan="7" class="py-16 px-4 text-center">
+                    <div class="flex flex-col items-center justify-center max-w-md mx-auto">
+                      <div
+                        class="w-16 h-16 rounded-2xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center mb-4 border border-sky-100 shadow-sm">
+                        <span class="material-symbols-outlined text-[32px]">folder_off</span>
+                      </div>
+                      <h3 class="text-base font-bold text-slate-800 mb-1">Belum Ada Data Siswa Ditagih</h3>
+                      <p class="text-xs text-slate-500 mb-6 leading-relaxed">
+                        Data penagihan uang kas di database masih kosong. Silakan daftarkan siswa atau buat rincian
+                        tagihan kas untuk mulai mencatat dan memantau iuran.
+                      </p>
+                      <div class="flex items-center gap-3">
+                        <button type="button" onclick="openModalSiswa()"
+                          class="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] text-white text-xs font-semibold rounded-xl shadow-sm transition-all">
+                          <span class="material-symbols-outlined text-[18px]">person_add</span>
+                          <span>Tambah Data Siswa</span>
+                        </button>
+                        <button type="button" onclick="openModal()"
+                          class="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl transition-all">
+                          <span class="material-symbols-outlined text-[18px]">post_add</span>
+                          <span>Tambah Tagihan Baru</span>
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+                <tr id="rowNoFilterResult" class="hidden">
+                  <td colspan="7" class="py-12 px-4 text-center">
+                    <div class="flex flex-col items-center justify-center max-w-sm mx-auto">
+                      <span class="material-symbols-outlined text-[28px] text-slate-400 mb-2">search_off</span>
+                      <p class="text-xs font-medium text-slate-500">Tidak ada data siswa yang cocok dengan filter atau
+                        kata kunci pencarian.</p>
+                    </div>
+                  </td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Info -->
+        <div
+          class="pt-4 mt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <p class="">Menampilkan <span class="font-bold text-slate-800" id="counterTotalSiswa">{{
+              total_siswa|default(0) }}</span> siswa terdaftar</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: Catat Pembayaran Iuran Siswa       -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalCatatBayarBackdrop" onclick="if(event.target === this) closeModalCatatBayar()">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[90vh] scale-95"
+      id="modalCatatBayarContent" onclick="event.stopPropagation()">
+      <!-- Header Modal -->
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">payments</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">Catat Pembayaran Iuran Siswa</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Catat setoran angsuran atau pelunasan iuran kas siswa.</p>
+          </div>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors"
+          type="button" onclick="closeModalCatatBayar()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Form Fields Modal Catat Bayar -->
+      <form class="p-6 space-y-4 overflow-y-auto" id="formCatatBayar" action="{{ url_for('penagihan_catat_bayar') }}"
+        method="POST">
+        <input type="hidden" id="inputSiswaIdBayar" name="siswa_id" value="">
+
+        <!-- Rincian Siswa & Tagihan -->
+        <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div
+                class="w-7 h-7 rounded-lg bg-sky-50 text-[var(--np-navy-mid)] font-bold text-xs flex items-center justify-center border border-sky-100"
+                id="badgeSiswaInisial">AF</div>
+              <div>
+                <span class="font-bold text-slate-800 text-sm block" id="namaSiswaText">Nama Siswa</span>
+                <span class="text-xs text-slate-400 block" id="kelasSiswaText">{{ buku.nama if buku else 'Kelas' }} &bull; SIS-001</span>
+              </div>
+            </div>
+            <span
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">Setoran
+              Kas</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/60 text-xs">
+            <div class="bg-white p-2 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block mb-0.5">Total Tagihan</span>
+              <span class="font-bold text-slate-700" id="modalTagihanAwal">Rp 50.000</span>
+            </div>
+            <div class="bg-white p-2 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block mb-0.5">Sudah Bayar</span>
+              <span class="font-bold text-emerald-600" id="modalSudahBayar">Rp 0</span>
+            </div>
+            <div class="bg-white p-2 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block mb-0.5">Sisa Tagihan</span>
+              <span class="font-bold text-rose-500" id="modalSisaTagihan">Rp 50.000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Nominal Bayar -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputNominalBayar">
+            Nominal Pembayaran Baru (Rp) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span
+              class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold font-label-md">Rp</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 font-label-md placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="inputNominalBayar" name="nominal" placeholder="50.000" required type="text">
+          </div>
+        </div>
+
+        <!-- Tanggal & Metode Bayar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputTanggalBayar">
+              Tanggal Pembayaran <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">calendar_today</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all font-label-md"
+                id="inputTanggalBayar" name="tanggal" type="date" required>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputMetodeBayar">
+              Metode Pembayaran
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">account_balance_wallet</span>
+              <select
+                class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all appearance-none cursor-pointer"
+                id="inputMetodeBayar" name="metode_pembayaran">
+                <option value="Kas Tunai (Cash)" selected>Kas Tunai (Cash)</option>
+                <option value="QRIS Kas">QRIS Kas</option>
+                <option value="Transfer Bank">Transfer Bank</option>
+              </select>
+              <span
+                class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">expand_more</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Catatan Bayar -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputCatatanBayar">Catatan / Keterangan (Opsional)</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-3 text-slate-400 text-[18px]">notes</span>
+            <textarea
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all resize-none"
+              id="inputCatatanBayar" name="catatan" placeholder=""
+              rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Footer Modal Catat Bayar -->
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+            type="button" onclick="closeModalCatatBayar()">Batal</button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>Simpan Pembayaran</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: Buat Tagihan Iuran Kas Baru        -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 hidden opacity-0 pointer-events-none"
+    id="modalBackdrop" onclick="if(event.target === this) closeModal()">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[90vh] scale-95"
+      id="modalContent" onclick="event.stopPropagation()">
+      <!-- Header Modal -->
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">receipt_long</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">Buat Tagihan Iuran Kas Baru</h2>
+            <p class="text-sm text-slate-500 mt-0.5 leading-relaxed">Atur rincian tagihan kas untuk seluruh anggota atau
+              kelompok tertentu.</p>
+          </div>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors"
+          type="button" onclick="closeModal()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Form Fields Modal Buat Tagihan -->
+      <form class="p-6 space-y-4 overflow-y-auto" id="formTambahTagihan"
+        action="{{ url_for('penagihan_buat_tagihan') }}" method="POST">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputNamaTagihan">Nama / Judul Tagihan <span class="text-rose-500">*</span></label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">title</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="inputNamaTagihan" name="judul" placeholder="Iuran Kas {{ buku.nama if buku else 'Kelas' }}"
+              value="{% if tagihan_kas %}{{ tagihan_kas.judul }}{% else %}Iuran Kas {{ buku.nama if buku else 'Kelas' }}{% endif %}" required
+              type="text">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputJumlahTagihan">Nominal Kas (Rp) <span class="text-rose-500">*</span></label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">payments</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 font-label-md focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="inputJumlahTagihan" name="nominal" placeholder="50.000"
+              value="{% if tagihan_kas %}{{ '{:,.0f}'.format(tagihan_kas.nominal).replace(',', '.') }}{% else %}50.000{% endif %}"
+              required type="text">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputKategoriTagihan">Kategori Tagihan</label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">category</span>
+            <select
+              class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all appearance-none cursor-pointer"
+              id="inputKategoriTagihan" name="kategori">
+              <option value="Uang Kas Bulanan" {% if tagihan_kas and tagihan_kas.kategori=='Uang Kas Bulanan'
+                %}selected{% endif %}>Uang Kas Bulanan</option>
+              <option value="Uang Kas Kelas" {% if tagihan_kas and tagihan_kas.kategori=='Uang Kas Kelas' %}selected{%
+                endif %}>Uang Kas Kelas</option>
+              <option value="Iuran Event &amp; Kegiatan" {% if tagihan_kas and
+                tagihan_kas.kategori=='Iuran Event &amp; Kegiatan' %}selected{% endif %}>Iuran Event &amp; Kegiatan
+              </option>
+              <option value="Kas Praktikum &amp; Alat" {% if tagihan_kas and
+                tagihan_kas.kategori=='Kas Praktikum &amp; Alat' %}selected{% endif %}>Kas Praktikum &amp; Alat</option>
+            </select>
+            <span
+              class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">expand_more</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputJatuhTempoTagihan">Jatuh Tempo (Opsional)</label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">calendar_month</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="inputJatuhTempoTagihan" name="jatuh_tempo" type="date"
+              value="{% if tagihan_kas and tagihan_kas.jatuh_tempo %}{{ tagihan_kas.jatuh_tempo }}{% endif %}">
+          </div>
+          <p class="text-xs text-slate-500 mt-1.5 ml-1">
+            Isi tanggal ini jika ingin sistem mengirim <b>Pesan Pengingat Otomatis</b> pada hari H jatuh tempo.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputCatatanTagihan">Catatan / Keterangan (Opsional)</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-3 text-slate-400 text-[18px]">notes</span>
+            <textarea
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all resize-none"
+              id="inputCatatanTagihan" name="catatan"
+              placeholder="Tambahkan pesan atau instruksi pembayaran bagi anggota..."
+              rows="2">{% if tagihan_kas %}{{ tagihan_kas.catatan }}{% endif %}</textarea>
+          </div>
+        </div>
+
+        <div class="p-3.5 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-xs text-emerald-900 flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-[20px] text-emerald-600 shrink-0">check_circle</span>
+          <span>Nominal iuran kas atau event ini akan otomatis ditambahkan ke total tagihan seluruh siswa terdaftar.</span>
+        </div>
+        <input type="hidden" name="terapkan_semua" value="on">
+
+        <!-- Footer Modal -->
+        <div class="pt-4 border-t border-slate-100 bg-white flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+            type="button" onclick="closeModal()">Batal</button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>Simpan &amp; Terbitkan Tagihan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: Tambah Data Siswa Ditagih         -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalSiswaBackdrop" onclick="if(event.target === this) closeModalSiswa()">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[90vh] scale-95"
+      id="modalSiswaContent" onclick="event.stopPropagation()">
+      <!-- Header Modal -->
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">person_add</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">Tambah Data Siswa Ditagih</h2>
+            <p class="text-sm text-slate-500 mt-0.5 leading-relaxed">Daftarkan siswa baru untuk menerima tagihan iuran
+              kas.</p>
+          </div>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors"
+          type="button" onclick="closeModalSiswa()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Form Fields Modal Siswa -->
+      <form class="p-6 space-y-4 overflow-y-auto" id="formTambahSiswa" action="{{ url_for('penagihan_tambah_siswa') }}"
+        method="POST">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputNamaSiswa">Nama Lengkap Siswa <span class="text-rose-500">*</span></label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">badge</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="inputNamaSiswa" name="nama" placeholder="" required type="text">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputKelasSiswa">Kelas / Kelompok <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">school</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="inputKelasSiswa" name="kelas" placeholder="{{ buku.nama if buku else 'Kelas' }}" required type="text"
+                value="{{ buku.nama if buku else 'Kelas' }}">
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Otomatis mengikuti pencatatan aktif: <strong class="text-[#00529C]">{{ buku.nama if buku else 'Kelas' }}</strong></p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputTagihanSiswa">Nominal Tagihan Kas (Rp) <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <span
+                class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold font-label-md">Rp</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 font-label-md placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="inputTagihanSiswa" name="tagihan" placeholder="50.000"
+                value="{% if total_tagihan_buku and total_tagihan_buku > 0 %}{{ '{:,.0f}'.format(total_tagihan_buku).replace(',', '.') }}{% elif tagihan_kas %}{{ '{:,.0f}'.format(tagihan_kas.nominal).replace(',', '.') }}{% else %}50.000{% endif %}"
+                required type="text">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputKontakSiswa">Alamat Email Siswa <span class="text-rose-500">*</span></label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">mail</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="inputKontakSiswa" name="kontak" placeholder="" required type="email">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputWaSiswa">Nomor WhatsApp</label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">call</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="inputWaSiswa" name="whatsapp_number" placeholder="" type="text">
+            </div>
+          </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="inputStatusTagihan">Status Tagihan Awal</label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">assignment_turned_in</span>
+              <select
+                class="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all appearance-none cursor-pointer"
+                id="inputStatusTagihan" name="status">
+                <option value="Belum Lunas" selected>Belum Lunas</option>
+                <option value="Lunas">Lunas</option>
+              </select>
+              <span
+                class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">expand_more</span>
+            </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="inputCatatanSiswa">Catatan Tambahan (Opsional)</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-3 text-slate-400 text-[18px]">notes</span>
+            <textarea
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all resize-none"
+              id="inputCatatanSiswa" name="catatan"
+              placeholder="Catatan khusus nomor absen, kepengurusan, atau dispensasi..." rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Footer Modal Siswa -->
+        <div class="pt-4 border-t border-slate-100 bg-white flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+            type="button" onclick="closeModalSiswa()">Batal</button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">save</span>
+            <span>Simpan Data Siswa</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 4: QRIS Kas                           -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalQrisBackdrop" onclick="if(event.target === this) closeModalQris()">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl border border-slate-100 shadow-2xl overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[90vh] scale-95"
+      id="modalQrisContent" onclick="event.stopPropagation()">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-9 h-9 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100">
+            <span class="material-symbols-outlined text-[20px]">qr_code_2</span>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">QRIS Kas Kelas</h2>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors"
+          onclick="closeModalQris()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="p-6 flex flex-col items-center bg-white">
+        {% if user.qris_path %}
+        <div class="w-full flex justify-center items-center">
+          <img
+            src="{{ url_for('static', filename='uploads/' + user.qris_path) }}"
+            alt="Kode QRIS Pembayaran Kas Kelas"
+            class="w-64 h-64 rounded-2xl object-contain border border-slate-100 shadow-sm p-2 bg-white">
+        </div>
+        <p class="text-xs text-slate-500 text-center mt-3">Scan kode QRIS di atas untuk melakukan pembayaran iuran kas secara non-tunai.</p>
+      </div>
+      <div class="p-6 pt-0 bg-white flex items-center justify-center">
+        <button
+          class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+          onclick="closeModalQris()" type="button">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+          <span>Tutup</span>
+        </button>
+      </div>
+        {% else %}
+        <div class="w-full flex flex-col items-center justify-center py-6">
+          <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">image_not_supported</span>
+          <p class="text-sm font-bold text-slate-700 mb-1">QRIS Belum Tersedia</p>
+          <p class="text-xs text-slate-500 text-center mb-6 max-w-xs">Ayo tambahkan file gambar QRIS agar bisa digunakan oleh siswa untuk melakukan pembayaran.</p>
+          <a href="{{ url_for('pengaturan') }}" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all">
+            <span class="material-symbols-outlined text-[18px]">settings</span>
+            <span>Ke Pengaturan QRIS</span>
+          </a>
+        </div>
+      </div>
+        {% endif %}
+    </div>
+  </div>
+
+
+
+  <!-- ========================================== -->
+  <!-- MODAL: Hapus Tagihan Kas                   -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalHapusTagihanBackdrop" onclick="if(event.target === this) closeModalHapusTagihan()">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col scale-95"
+      id="modalHapusTagihanContent" onclick="event.stopPropagation()">
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-rose-50/60">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">delete_forever</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">Hapus Tagihan Kas</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Konfirmasi penghapusan tagihan kas.</p>
+          </div>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors cursor-pointer"
+          type="button" onclick="closeModalHapusTagihan()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <form id="formHapusTagihan" method="POST" action="">
+        <div class="p-6 space-y-3.5 bg-white">
+          <p class="text-sm text-slate-700 leading-relaxed">
+            Apakah Anda yakin ingin menghapus tagihan <strong id="hapusJudulTagihan" class="text-rose-600 font-bold">-</strong>?
+          </p>
+          <div class="p-3.5 bg-amber-50 border border-amber-200/80 rounded-xl text-xs text-amber-800 flex items-start gap-2.5">
+            <span class="material-symbols-outlined text-[18px] text-amber-600 shrink-0 mt-0.5">warning</span>
+            <div class="space-y-1">
+              <span class="font-bold block">Perhatian:</span>
+              <p class="text-amber-700 leading-relaxed">Nominal tagihan ini akan dikurangkan dari total tagihan siswa dan status pelunasan siswa akan diperbarui secara otomatis.</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 pt-3 border-t border-slate-100 bg-white flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+            type="button" onclick="closeModalHapusTagihan()">Batal</button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+            <span>Ya, Hapus Tagihan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: Kelola & Pemilihan Tagihan          -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalKelolaTagihanBackdrop" onclick="if(event.target === this) closeModalKelolaTagihan()">
+    <div
+      class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[85vh] scale-95"
+      id="modalKelolaTagihanContent" onclick="event.stopPropagation()">
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-sky-50 text-[var(--np-navy-mid)] flex items-center justify-center shrink-0 border border-sky-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">fact_check</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">Daftar &amp; Pemilihan Tagihan</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Pilih tagihan aktif, salin token portal siswa, atau hapus tagihan yang tidak diperlukan.</p>
+          </div>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors cursor-pointer"
+          type="button" onclick="closeModalKelolaTagihan()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto divide-y divide-slate-100 space-y-3">
+        {% if tagihan_list %}
+        {% for t in tagihan_list %}
+        {% set is_active = (tagihan_kas and t.id == tagihan_kas.id) %}
+        <div class="pt-3 first:pt-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3.5 rounded-xl transition-all {% if is_active %}bg-blue-50/60 border border-blue-200/80{% else %}hover:bg-slate-50 border border-transparent{% endif %}">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-slate-900 text-sm">{{ t.judul }}</span>
+              {% if is_active %}
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <span class="material-symbols-outlined text-[12px]">check_circle</span> Aktif
+              </span>
+              {% endif %}
+              <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ t.kategori or 'Uang Kas' }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+              <span class="font-semibold text-[#0066C0]">Rp {{ "{:,.0f}".format(t.nominal|default(0)).replace(',', '.') }}</span>
+              <span>&bull;</span>
+              <span>Token: <strong class="font-mono text-slate-700">{{ t.token }}</strong></span>
+              {% if t.jatuh_tempo %}
+              <span>&bull;</span>
+              <span>Tempo: {{ t.jatuh_tempo.strftime('%d %b %Y') if t.jatuh_tempo.strftime is defined else t.jatuh_tempo }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            {% if not is_active %}
+            <button type="button" onclick="pilihTokenTagihan('{{ t.token }}', '{{ t.judul|escape }}', '{{ t.id }}'); closeModalKelolaTagihan();"
+              class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0066C0] hover:bg-[#00529C] text-white shadow-xs transition-all cursor-pointer">
+              <span class="material-symbols-outlined text-[15px]">check</span>
+              <span>Pilih Tagihan</span>
+            </button>
+            {% else %}
+            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span class="material-symbols-outlined text-[15px]">done_all</span>
+              <span>Sedang Digunakan</span>
+            </span>
+            {% endif %}
+
+            <!-- Tombol Hapus Tagihan -->
+            <button type="button" onclick="closeModalKelolaTagihan(); konfirmasiHapusTagihan('{{ t.id }}', '{{ t.judul|escape }}');"
+              class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 shadow-xs transition-all cursor-pointer"
+              title="Hapus tagihan {{ t.judul }}">
+              <span class="material-symbols-outlined text-[15px]">delete</span>
+              <span>Hapus</span>
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="py-8 text-center">
+          <p class="text-sm text-slate-500">Belum ada tagihan yang dibuat.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="p-6 pt-3 border-t border-slate-100 bg-white flex items-center justify-between gap-3">
+        <button type="button" onclick="closeModalKelolaTagihan(); openModal();"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          <span>Buat Tagihan Baru</span>
+        </button>
+        <button
+          class="px-5 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+          type="button" onclick="closeModalKelolaTagihan()">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 5: Hapus Siswa                        -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalHapusSiswaBackdrop" onclick="if(event.target === this) closeModalHapusSiswa()">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col scale-95"
+      id="modalHapusSiswaContent" onclick="event.stopPropagation()">
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">delete_forever</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">Hapus Data Siswa</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Konfirmasi penghapusan data siswa dari tagihan kas.</p>
+          </div>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors"
+          type="button" onclick="closeModalHapusSiswa()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <form id="formHapusSiswa" method="POST" action="">
+        <div class="p-6 space-y-3 bg-white">
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Yakin ingin menghapus data siswa <strong id="hapusNamaSiswa" class="text-slate-800 font-bold">-</strong>
+            (<span id="hapusNisSiswa" class="font-label-md text-xs text-slate-500">-</span>) dari daftar penagihan kas?
+            Tindakan ini tidak dapat dibatalkan.
+          </p>
+        </div>
+        <div class="p-6 pt-3 border-t border-slate-100 bg-white flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+            type="button" onclick="closeModalHapusSiswa()">Batal</button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-500 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+            <span>Ya, Hapus</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 6: Detail Siswa                       -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalDetailSiswaBackdrop" onclick="if(event.target === this) closeModalDetailSiswa()">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col scale-95"
+      id="modalDetailSiswaContent" onclick="event.stopPropagation()">
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-11 h-11 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 font-bold text-base"
+            id="detailInisial">
+            AF
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 leading-snug" id="detailNama">Nama Siswa</h2>
+            <p class="text-xs text-slate-500" id="detailKelasNis">{{ buku.nama if buku else 'Kelas' }} &bull; SIS-001</p>
+          </div>
+        </div>
+        <button class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors"
+          type="button" onclick="closeModalDetailSiswa()">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-3.5 bg-white text-sm">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <span class="text-xs text-slate-500">Alamat Email</span>
+          <span class="font-medium text-slate-800" id="detailKontak">-</span>
+        </div>
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <span class="text-xs text-slate-500">Total Tagihan Kas</span>
+          <span class="font-bold text-slate-800" id="detailTagihan">Rp 0</span>
+        </div>
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <span class="text-xs text-slate-500">Total Sudah Dibayar</span>
+          <span class="font-bold text-emerald-600" id="detailBayar">Rp 0</span>
+        </div>
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <span class="text-xs text-slate-500">Status Pembayaran</span>
+          <span
+            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-[#e8f5e9] text-[#2e7d32]">
+            <span class="w-1.5 h-1.5 rounded-lg bg-emerald-600"></span>Lunas
+          </span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-500 block mb-1">Catatan Khusus:</span>
+          <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 italic"
+            id="detailCatatan">Tidak ada catatan.</p>
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-100 bg-white flex justify-end">
+        <button
+          class="px-5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+          type="button" onclick="closeModalDetailSiswa()">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 7: Riwayat Setoran Kas Masuk          -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalRiwayatMasukBackdrop" onclick="if(event.target === this) closeModalRiwayatKasMasuk()">
+    <div
+      class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[85vh] scale-95"
+      id="modalRiwayatMasukContent" onclick="event.stopPropagation()">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+            <span class="material-symbols-outlined text-[20px]">history</span>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Riwayat Setoran Kas Masuk</h2>
+            <p class="text-xs text-slate-500">Mutasi kas masuk dari pembayaran iuran siswa yang tercatat di database.
+            </p>
+          </div>
+        </div>
+        <button
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-lg p-1.5 transition-colors cursor-pointer"
+          onclick="closeModalRiwayatKasMasuk()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-3">
+        {% if riwayat_kas_masuk %}
+        <div class="divide-y divide-slate-100 border border-slate-200/80 rounded-xl overflow-hidden">
+          {% for r in riwayat_kas_masuk %}
+          <div class="p-3.5 bg-white hover:bg-slate-50/80 flex items-center justify-between gap-3 transition-colors">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
+                <span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-800">{{ r.keterangan }}</p>
+                <p class="text-[11px] text-slate-400">
+                  {{ r.tanggal.strftime('%d %b %Y') if r.tanggal else '-' }} &bull; {{ r.metode_pembayaran or 'Kas
+                  Tunai' }}
+                </p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-xs font-bold text-emerald-600 block">
+                + Rp {{ "{:,.0f}".format(r.nominal|default(0)).replace(',', '.') }}
+              </span>
+              <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-medium">Berhasil</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="py-12 px-4 text-center">
+          <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+            <span class="material-symbols-outlined text-[24px]">receipt_long</span>
+          </div>
+          <h4 class="text-sm font-bold text-slate-700">Belum Ada Riwayat Setoran Kas</h4>
+          <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+            Data setoran kas masuk dari siswa belum ada di database. Setoran akan otomatis tercatat saat siswa membayar
+            iuran.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+      <div class="p-4 border-t border-slate-100 bg-slate-50/60 flex justify-end">
+        <button
+          class="px-5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-all"
+          type="button" onclick="closeModalRiwayatKasMasuk()">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 8: Edit Data Siswa                    -->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalEditSiswaBackdrop" onclick="if(event.target === this) closeModalEditSiswa()">
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col max-h-[90vh] scale-95"
+      id="modalEditSiswaContent" onclick="event.stopPropagation()">
+      <!-- Header Modal -->
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100 shadow-sm mt-0.5">
+            <span class="material-symbols-outlined text-[22px]">person_edit</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800 tracking-tight">Edit Data Siswa</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Perbarui identitas siswa, kelas, atau nominal tagihan kas.</p>
+          </div>
+        </div>
+        <button
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl p-2 transition-colors cursor-pointer"
+          onclick="closeModalEditSiswa()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Form Edit Siswa -->
+      <form action="" class="p-6 overflow-y-auto space-y-4" id="formEditSiswa" method="POST">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" for="editSiswaNama">
+            Nama Lengkap Siswa <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">badge</span>
+            <input
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+              id="editSiswaNama" name="nama" required type="text">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="editSiswaKelas">
+              Kelas / Rombel <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">school</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="editSiswaKelas" name="kelas" required type="text">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="editSiswaTagihan">
+              Nominal Tagihan (Rp) <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold font-label-md">Rp</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 font-label-md focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="editSiswaTagihan" name="tagihan" min="1" required type="text">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="editSiswaKontak">
+              Alamat Email (Opsional)
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">mail</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="editSiswaKontak" name="kontak" placeholder="" type="email">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+              for="editSiswaWA">
+              Nomor WhatsApp (Opsional)
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">call</span>
+              <input
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all"
+                id="editSiswaWA" name="whatsapp_number" placeholder="" type="text">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5"
+            for="editSiswaCatatan">
+            Catatan Tambahan (Opsional)
+          </label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3.5 top-3 text-slate-400 text-[18px]">notes</span>
+            <textarea
+              class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50/70 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-[#0066C0] focus:ring-2 focus:ring-[#0066C0]/15 transition-all resize-none"
+              id="editSiswaCatatan" name="catatan" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button
+            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all"
+            onclick="closeModalEditSiswa()" type="button">
+            Batal
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--np-navy-mid)] hover:bg-[var(--np-navy)] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+            type="submit">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: Ingatkan Semua Siswa (Mass Reminder)-->
+  <!-- ========================================== -->
+  <div
+    class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 opacity-0 pointer-events-none hidden"
+    id="modalIngatkanSemuaBackdrop" onclick="if(event.target === this) closeModalIngatkanSemua()">
+    <div
+      class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden transform transition-transform duration-300 flex flex-col scale-95"
+      id="modalIngatkanSemuaContent" onclick="event.stopPropagation()">
+      
+      <!-- Header Modal -->
+      <div class="p-6 border-b border-slate-100 flex items-start justify-between bg-amber-50/70">
+        <div class="flex items-start gap-3.5">
+          <div
+            class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200 shadow-xs">
+            <span class="material-symbols-outlined text-[24px]">campaign</span>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-slate-800 tracking-tight">Ingatkan Semua Siswa</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Kirim pengingat tagihan iuran kas serentak via Gmail.</p>
+          </div>
+        </div>
+        <button
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded-xl p-2 transition-colors cursor-pointer"
+          onclick="closeModalIngatkanSemua()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Body Modal -->
+      <div class="p-6 space-y-4">
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-500">Siswa Belum Lunas:</span>
+            <span class="font-bold text-slate-800">{{ total_belum_lunas|default(0) }} Siswa</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-500">Total Nominal Tertunggak:</span>
+            <span class="font-bold text-rose-600 font-mono">Rp {{ "{:,.0f}".format(total_sisa|default(0)).replace(',', '.') }}</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 bg-blue-50/70 border border-blue-200/70 rounded-xl flex items-start gap-3 text-xs text-blue-900 leading-relaxed">
+          <span class="material-symbols-outlined text-blue-600 text-[18px] shrink-0 mt-0.5">info</span>
+          <span>Pesan pengingat email akan dikirim secara serentak ke semua siswa yang belum lunas dan memiliki alamat email Gmail valid.</span>
+        </div>
+
+        <form id="formIngatkanSemua" method="POST" action="{{ url_for('penagihan_ingatkan_semua') }}" onsubmit="handleIngatkanSemuaSubmit(event)">
+          <div class="pt-3 flex items-center justify-end gap-3">
+            <button
+              class="px-5 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all cursor-pointer"
+              onclick="closeModalIngatkanSemua()" type="button">
+              Batal
+            </button>
+            <button
+              class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-[0.98] text-white text-xs font-bold rounded-xl shadow-sm shadow-amber-500/25 transition-all cursor-pointer"
+              type="submit" id="btnSubmitIngatkanSemua">
+              <span class="material-symbols-outlined text-[18px]" id="iconSubmitIngatkanSemua">send</span>
+              <span id="textSubmitIngatkanSemua">Kirim Pengingat Sekarang</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Form untuk Pengingat Email (Gmail) -->
+  <form id="formIngatkan" method="POST" action="" class="hidden"></form>
+
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // ==========================================
+    // Auto-Dismiss Flash Messages
+    // ==========================================
+    setTimeout(() => {
+      const flashList = document.querySelectorAll('.flash-toast');
+      flashList.forEach(el => {
+        el.classList.add('opacity-0', 'translate-y-[-10px]');
+        setTimeout(() => el.remove(), 300);
+      });
+    }, 4000);
+
+    // ==========================================
+    // Modal Buat Tagihan
+    // ==========================================
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalContent = document.getElementById('modalContent');
+
+    function openModal() {
+      if (!modalBackdrop || !modalContent) return;
+      modalBackdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+      modalBackdrop.classList.add('opacity-100', 'pointer-events-auto');
+      modalContent.classList.remove('scale-95');
+      modalContent.classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      if (!modalBackdrop || !modalContent) return;
+      modalBackdrop.classList.remove('opacity-100', 'pointer-events-auto');
+      modalBackdrop.classList.add('opacity-0', 'pointer-events-none');
+      modalContent.classList.remove('scale-100');
+      modalContent.classList.add('scale-95');
+      setTimeout(() => { modalBackdrop.classList.add('hidden'); }, 300);
+      document.body.style.overflow = '';
+    }
+
+    // ==========================================
+    // Modal Tambah Siswa
+    // ==========================================
+    const siswaBackdrop = document.getElementById('modalSiswaBackdrop');
+    const siswaContent = document.getElementById('modalSiswaContent');
+
+    function openModalSiswa() {
+      if (!siswaBackdrop || !siswaContent) return;
+      const inpKelas = document.getElementById('inputKelasSiswa');
+      if (inpKelas && (!inpKelas.value || inpKelas.value === 'Kelas XII-IPA-1')) {
+        inpKelas.value = "{{ buku.nama if buku else 'Kelas' }}";
+      }
+      siswaBackdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+      siswaBackdrop.classList.add('opacity-100', 'pointer-events-auto');
+      siswaContent.classList.remove('scale-95');
+      siswaContent.classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModalSiswa() {
+      if (!siswaBackdrop || !siswaContent) return;
+      siswaBackdrop.classList.remove('opacity-100', 'pointer-events-auto');
+      siswaBackdrop.classList.add('opacity-0', 'pointer-events-none');
+      siswaContent.classList.remove('scale-100');
+      siswaContent.classList.add('scale-95');
+      setTimeout(() => { siswaBackdrop.classList.add('hidden'); }, 300);
+      document.body.style.overflow = '';
+    }
+
+    // ==========================================
+    // Modal Catat Bayar
+    // ==========================================
+    function openModalCatatBayar(id, nama, nis, kelas, total, bayar, sisa, sisaNum, inisial) {
+      const backdrop = document.getElementById('modalCatatBayarBackdrop');
+      const content = document.getElementById('modalCatatBayarContent');
+      if (!backdrop || !content) return;
+
+      document.getElementById('inputSiswaIdBayar').value = id;
+      if (nama) document.getElementById('namaSiswaText').textContent = nama;
+      if (nis && kelas) document.getElementById('kelasSiswaText').innerHTML = kelas + ' &bull; ' + nis;
+      if (inisial) document.getElementById('badgeSiswaInisial').textContent = inisial;
+      if (total) document.getElementById('modalTagihanAwal').textContent = total;
+      if (bayar) document.getElementById('modalSudahBayar').textContent = bayar;
+      if (sisa) document.getElementById('modalSisaTagihan').textContent = sisa;
+      if (sisaNum) document.getElementById('inputNominalBayar').value = sisaNum;
+
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('inputTanggalBayar');
+      if (dateInput) dateInput.value = today;
+
+      backdrop.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100', 'pointer-events-auto');
+      content.classList.remove('scale-95');
+      content.classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModalCatatBayar() {
+      const backdrop = document.getElementById('modalCatatBayarBackdrop');
+      const content = document.getElementById('modalCatatBayarContent');
+      if (!backdrop || !content) return;
+      backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      setTimeout(() => { backdrop.classList.add('hidden'); }, 300);
+      document.body.style.overflow = '';
+    }
+
+    // ==========================================
+    // Modal Hapus Siswa
+    // ==========================================
+    function openModalHapusSiswa(id, nama, nis) {
+      const b = document.getElementById('modalHapusSiswaBackdrop');
+      const c = document.getElementById('modalHapusSiswaContent');
+      if (!b || !c) return;
+      if (nama) document.getElementById('hapusNamaSiswa').textContent = nama;
+      if (nis) document.getElementById('hapusNisSiswa').textContent = nis;
+      const form = document.getElementById('formHapusSiswa');
+      if (form) form.action = "/penagihan/hapus_siswa/" + id;
+
+      b.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0', 'pointer-events-none');
+        b.classList.add('opacity-100', 'pointer-events-auto');
+        c.classList.remove('scale-95');
+        c.classList.add('scale-100');
+      }, 10);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModalHapusSiswa() {
+      const b = document.getElementById('modalHapusSiswaBackdrop');
+      const c = document.getElementById('modalHapusSiswaContent');
+      if (!b || !c) return;
+      b.classList.remove('opacity-100', 'pointer-events-auto');
+      b.classList.add('opacity-0', 'pointer-events-none');
+      c.classList.remove('scale-100');
+      c.classList.add('scale-95');
+      setTimeout(() => { b.classList.add('hidden'); }, 300);
+      document.body.style.overflow = '';
+    }
+
+    // ==========================================
+    // Modal Detail Siswa
+    // ==========================================
+    function openDetailSiswa(nama, nis, kelas, kontak, tagihan, bayar, inisial, catatan) {
+      const b = document.getElementById('modalDetailSiswaBackdrop');
+      const c = document.getElementById('modalDetailSiswaContent');
+      if (!b || !c) return;
+      document.getElementById('detailNama').textContent = nama;
+      document.getElementById('detailKelasNis').innerHTML = kelas + ' &bull; ' + nis;
+      document.getElementById('detailInisial').textContent = inisial;
+      document.getElementById('detailKontak').textContent = kontak || '-';
+      document.getElementById('detailTagihan').textContent = tagihan;
+      document.getElementById('detailBayar').textContent = bayar;
+      document.getElementById('detailCatatan').textContent = catatan || 'Tidak ada catatan tambahan.';
+
+      b.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+      b.classList.add('opacity-100', 'pointer-events-auto');
+      c.classList.remove('scale-95');
+      c.classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModalDetailSiswa() {
+      const b = document.getElementById('modalDetailSiswaBackdrop');
+      const c = document.getElementById('modalDetailSiswaContent');
+      if (!b || !c) return;
+      b.classList.remove('opacity-100', 'pointer-events-auto');
+      b.classList.add('opacity-0', 'pointer-events-none');
+      c.classList.remove('scale-100');
+      c.classList.add('scale-95');
+      setTimeout(() => { b.classList.add('hidden'); }, 300);
+      document.body.style.overflow = '';
+    }
+
+    // ==========================================
+    // Action Kirim Pengingat (Anti-Spam Confirmation)
+    // ==========================================
+    function kirimPengingat(id, nama, kontak) {
+      if (!kontak || kontak.trim() === '' || kontak === '-' || kontak === '0') {
+        alert('Alamat email untuk ' + nama + ' belum diisi. Lengkapi di menu Edit Siswa terlebih dahulu.');
+        return;
+      }
+      if (confirm('Kirim pesan pengingat tagihan kas via Email ke ' + nama + ' (' + kontak + ')?')) {
+        const form = document.getElementById('formIngatkan');
+        if (form) {
+          form.action = "/penagihan/ingatkan/" + id;
+          form.submit();
+        }
+      }
+    }
+
+    // ==========================================
+    // Modal Ingatkan Semua Siswa
+    // ==========================================
+    function openModalIngatkanSemua() {
+      const b = document.getElementById('modalIngatkanSemuaBackdrop');
+      const c = document.getElementById('modalIngatkanSemuaContent');
+      if (!b || !c) return;
+      b.classList.remove('hidden');
+      setTimeout(() => {
+        b.classList.remove('opacity-0', 'pointer-events-none');
+        b.classList.add('opacity-100', 'pointer-events-auto');
+        c.classList.remove('scale-95');
+        c.classList.add('scale-100');
+      }, 10);
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModalIngatkanSemua() {
+      const b = document.getElementById('modalIngatkanSemuaBackdrop');
+      const c = document.getElementById('modalIngatkanSemuaContent');
+      if (!b || !c) return;
+      b.classList.remove('opacity-100', 'pointer-events-auto');
+      b.classList.add('opacity-0', 'pointer-events-none');
+      c.classList.remove('scale-100');
+      c.classList.add('scale-95');
+      setTimeout(() => { b.classList.add('hidden'); }, 300);
+      document.body.style.overflow = '';
+    }
+
+    function handleIngatkanSemuaSubmit(e) {
+      const btn = document.getElementById('btnSubmitIngatkanSemua');
+      const icon = document.getElementById('iconSubmitIngatkanSemua');
+      const text = document.getElementById('textSubmitIngatkanSemua');
+      if (btn && icon && text) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        icon.textContent = 'sync';
+        icon.classList.add('animate-spin');
+        text.textContent = 'Mengirim Pengingat...';
+      }
+      return true;
+    }
+
+    // ==========================================
+    // Modal QRIS
+    // ==========================================
+    function openModalQris() {
+      const b = document.getElementById('modalQrisBackdrop');
+      const c = document.getElementById('modalQrisContent');
+      if (b && c) {
+        b.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+        b.classList.add('opacity-100', 'pointer-events-auto');
+        c.classList.remove('scale-95');
+        c.classList.add('scale-100');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalQris() {
+      const b = document.getElementById('modalQrisBackdrop');
+      const c = document.getElementById('modalQrisContent');
+      if (b && c) {
+        b.classList.remove('opacity-100', 'pointer-events-auto');
+        b.classList.add('opacity-0', 'pointer-events-none');
+        c.classList.remove('scale-100');
+        c.classList.add('scale-95');
+        setTimeout(() => { b.classList.add('hidden'); }, 300);
+        document.body.style.overflow = '';
+      }
+    }
+
+    // ==========================================
+    // Speed Dial FAB
+    // ==========================================
+    function toggleFabMenu() {
+      const menu = document.getElementById('fabMenu');
+      const icon = document.getElementById('fabIcon');
+      if (!menu || !icon) return;
+      const isOpen = !menu.classList.contains('pointer-events-none');
+      if (isOpen) {
+        menu.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+        menu.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+        icon.style.transform = 'rotate(0deg)';
+      } else {
+        menu.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+        menu.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+        icon.style.transform = 'rotate(45deg)';
+      }
+    }
+
+    document.addEventListener('click', function (e) {
+      const fab = document.getElementById('fabContainer');
+      const menu = document.getElementById('fabMenu');
+      const icon = document.getElementById('fabIcon');
+      if (fab && menu && !fab.contains(e.target) && !menu.classList.contains('pointer-events-none')) {
+        menu.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+        menu.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // ==========================================
+    // Realtime Filter & Search Siswa
+    // ==========================================
+    let currentFilterStatus = 'all';
+
+    function setFilterStatus(status) {
+      currentFilterStatus = status;
+      const btnAll = document.getElementById('tabFilterSemua');
+      const btnLunas = document.getElementById('tabFilterLunas');
+      const btnBelum = document.getElementById('tabFilterBelum');
+
+      [btnAll, btnLunas, btnBelum].forEach(btn => {
+        btn.className = "px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all";
+      });
+
+      if (status === 'all') {
+        btnAll.className = "px-3 py-1.5 text-xs font-semibold bg-white text-slate-900 rounded-lg shadow-sm transition-all";
+      } else if (status === 'lunas') {
+        btnLunas.className = "px-3 py-1.5 text-xs font-semibold bg-white text-slate-900 rounded-lg shadow-sm transition-all";
+      } else if (status === 'belum') {
+        btnBelum.className = "px-3 py-1.5 text-xs font-semibold bg-white text-slate-900 rounded-lg shadow-sm transition-all";
+      }
+
+      filterSiswa();
+    }
+
+    function filterSiswa() {
+      const searchVal = (document.getElementById('inputSearchSiswa')?.value || '').toLowerCase().trim();
+      const rows = document.querySelectorAll('.siswa-row');
+      const emptyRow = document.getElementById('rowEmptyState');
+      const noFilterRow = document.getElementById('rowNoFilterResult');
+      const counter = document.getElementById('counterTotalSiswa');
+
+      if (!rows || rows.length === 0) return; // Database masih kosong
+
+      let visibleCount = 0;
+      rows.forEach(row => {
+        const name = (row.getAttribute('data-name') || '').toLowerCase();
+        const nis = (row.getAttribute('data-nis') || '').toLowerCase();
+        const kelas = (row.getAttribute('data-kelas') || '').toLowerCase();
+        const status = (row.getAttribute('data-status') || '').toLowerCase();
+
+        const matchSearch = !searchVal || name.includes(searchVal) || nis.includes(searchVal) || kelas.includes(searchVal);
+        const matchStatus = (currentFilterStatus === 'all') || 
+                            (currentFilterStatus === 'lunas' && status === 'lunas') || 
+                            (currentFilterStatus === 'belum' && (status.includes('belum') || status !== 'lunas'));
+
+        if (matchSearch && matchStatus) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      if (noFilterRow) {
+        if (visibleCount === 0 && searchVal !== '') {
+          noFilterRow.classList.remove('hidden');
+        } else {
+          noFilterRow.classList.add('hidden');
+        }
+      }
+
+      if (counter) {
+        counter.textContent = visibleCount;
+      }
+    }
+
+    // ==========================================
+    // Modal Riwayat Setoran Kas Masuk
+    // ==========================================
+    function openModalRiwayatKasMasuk() {
+      const b = document.getElementById('modalRiwayatMasukBackdrop');
+      const c = document.getElementById('modalRiwayatMasukContent');
+      if (b && c) {
+        b.classList.remove('hidden');
+        setTimeout(() => {
+          b.classList.remove('opacity-0', 'pointer-events-none');
+          b.classList.add('opacity-100', 'pointer-events-auto');
+          c.classList.remove('scale-95');
+          c.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalRiwayatKasMasuk() {
+      const b = document.getElementById('modalRiwayatMasukBackdrop');
+      const c = document.getElementById('modalRiwayatMasukContent');
+      if (b && c) {
+        b.classList.remove('opacity-100', 'pointer-events-auto');
+        b.classList.add('opacity-0', 'pointer-events-none');
+        c.classList.remove('scale-100');
+        c.classList.add('scale-95');
+        setTimeout(() => {
+          b.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    // ==========================================
+    // Modal Edit Data Siswa
+    // ==========================================
+    function openModalEditSiswa(id, nama, nis, kelas, kontak, wa, tagihan, catatan) {
+      const form = document.getElementById('formEditSiswa');
+      if (form) form.action = '/penagihan/edit_siswa/' + id;
+
+      const inpNama = document.getElementById('editSiswaNama');
+      const inpKelas = document.getElementById('editSiswaKelas');
+      const inpTagihan = document.getElementById('editSiswaTagihan');
+      const inpKontak = document.getElementById('editSiswaKontak');
+      const inpWA = document.getElementById('editSiswaWA');
+      const inpCatatan = document.getElementById('editSiswaCatatan');
+
+      if (inpNama) inpNama.value = nama || '';
+      if (inpKelas) {
+        if (!kelas || kelas === 'Kelas XII-IPA-1' || kelas === '-') {
+          inpKelas.value = "{{ buku.nama if buku else '' }}";
+        } else {
+          inpKelas.value = kelas;
+        }
+      }
+      if (inpTagihan) inpTagihan.value = tagihan || '';
+      if (inpKontak) inpKontak.value = (kontak && kontak !== '-') ? kontak : '';
+      if (inpWA) inpWA.value = (wa && wa !== '-') ? wa : '';
+      if (inpCatatan) inpCatatan.value = (catatan && catatan !== '-') ? catatan : '';
+
+      const modal = document.getElementById('modalEditSiswaBackdrop');
+      const content = document.getElementById('modalEditSiswaContent');
+      if (modal && content) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          modal.classList.add('opacity-100', 'pointer-events-auto');
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalEditSiswa() {
+      const modal = document.getElementById('modalEditSiswaBackdrop');
+      const content = document.getElementById('modalEditSiswaContent');
+      if (modal && content) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    // Token Portal & Kredensial Helper Functions
+    let currentActiveToken = "{{ buku.token if (buku and buku.token) else (tagihan_kas.token if (tagihan_kas and tagihan_kas.token) else '') }}";
+    let currentActivePassword = "{{ buku.portal_password if (buku and buku.portal_password) else '123456' }}";
+    let currentActiveTagihanId = "{{ tagihan_kas.id if tagihan_kas else '' }}";
+    let currentActiveJudul = "{{ buku.nama if buku else (tagihan_kas.judul|escape if tagihan_kas else '') }}";
+    let isPasswordHidden = false;
+
+    function togglePasswordView() {
+      const el = document.getElementById('activePasswordText');
+      const icon = document.getElementById('iconEyePw');
+      if (!el || !icon) return;
+      if (isPasswordHidden) {
+        el.textContent = currentActivePassword;
+        icon.textContent = 'visibility';
+        isPasswordHidden = false;
+      } else {
+        el.textContent = '••••••••';
+        icon.textContent = 'visibility_off';
+        isPasswordHidden = true;
+      }
+    }
+
+    function salinText(txt, label) {
+      if (!txt) return;
+      navigator.clipboard.writeText(txt).then(() => {
+        alert(label + " berhasil disalin: " + txt);
+      }).catch(() => {
+        prompt("Salin " + label + ":", txt);
+      });
+    }
+
+    function salinFormatWA() {
+      const origin = window.location.origin;
+      const loginUrl = origin + "{{ url_for('login') }}";
+      const judul = currentActiveJudul || "Pencatatan Kas";
+      const token = currentActiveToken;
+      const pw = currentActivePassword;
+
+      const pesan = `📢 *INFORMASI LOGIN PORTAL KAS ${judul.toUpperCase()}*\n\nHalo teman-teman / bapak / ibu,\nBerikut akun login bersama untuk memantau rekap pembayaran dan pengeluaran kas:\n\n🌐 *Halaman Login* : ${loginUrl}\n👤 *Username / Token* : ${token}\n🔑 *Kata Sandi* : ${pw}\n\nSilakan buka halaman login, masukkan username dan kata sandi di atas untuk melihat transparansi kas. Terima kasih!`;
+
+      navigator.clipboard.writeText(pesan).then(() => {
+        alert("Pesan info login berhasil disalin!\n\nSilakan langsung tempel (paste) ke grup WhatsApp / Telegram kelas atau organisasi Anda.");
+      }).catch(() => {
+        prompt("Salin info login berikut:", pesan);
+      });
+    }
+
+    function openModalUbahPasswordPortal() {
+      const modal = document.getElementById('modalUbahPasswordPortalBackdrop');
+      const content = document.getElementById('modalUbahPasswordPortalContent');
+      if (modal && content) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          modal.classList.add('opacity-100', 'pointer-events-auto');
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalUbahPasswordPortal() {
+      const modal = document.getElementById('modalUbahPasswordPortalBackdrop');
+      const content = document.getElementById('modalUbahPasswordPortalContent');
+      if (modal && content) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    function pilihTokenTagihan(token, judul, tagihanId) {
+      currentActiveToken = token;
+      if (judul) currentActiveJudul = judul;
+      if (tagihanId) currentActiveTagihanId = tagihanId;
+
+      const el = document.getElementById('activeTokenText');
+      if (el) el.textContent = token;
+      const elJudul = document.getElementById('activeJudulText');
+      if (elJudul) elJudul.textContent = judul;
+      const btn = document.getElementById('btnBukaPortalLink');
+      if (btn) btn.href = "{{ url_for('portal_siswa') }}";
+
+      // Update styling on tagihan pills
+      document.querySelectorAll('.tagihan-pill-wrapper').forEach(wrap => {
+        const pId = wrap.getAttribute('data-pill-id');
+        const activeIcon = wrap.querySelector('.tagihan-active-icon');
+        const delBtn = wrap.querySelector('button:last-child');
+
+        if (pId == tagihanId) {
+          wrap.className = 'tagihan-pill-wrapper inline-flex items-center rounded-lg bg-white text-[#00529C] shadow-sm font-bold transition-all text-xs border border-white/20 overflow-hidden';
+          if (!activeIcon) {
+            const btn = wrap.querySelector('.tagihan-pill-btn');
+            if (btn) {
+              const span = document.createElement('span');
+              span.className = 'tagihan-active-icon material-symbols-outlined text-[13px] text-emerald-600';
+              span.textContent = 'check_circle';
+              btn.insertBefore(span, btn.firstChild);
+            }
+          }
+          if (delBtn) {
+            delBtn.className = 'px-1.5 py-1 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer border-l border-white/20';
+          }
+        } else {
+          wrap.className = 'tagihan-pill-wrapper inline-flex items-center rounded-lg bg-white/15 text-white hover:bg-white/25 transition-all text-xs border border-white/20 overflow-hidden';
+          if (activeIcon) activeIcon.remove();
+          if (delBtn) {
+            delBtn.className = 'px-1.5 py-1 text-rose-200 hover:bg-rose-500/30 hover:text-white transition-colors cursor-pointer border-l border-white/20';
+          }
+        }
+      });
+    }
+
+    function konfirmasiHapusTagihan(tagihanId, tagihanJudul) {
+      if (!tagihanId) tagihanId = currentActiveTagihanId;
+      if (!tagihanJudul) tagihanJudul = currentActiveJudul;
+
+      const form = document.getElementById('formHapusTagihan');
+      if (form) {
+        form.action = '/penagihan/hapus_tagihan/' + tagihanId;
+      }
+      const label = document.getElementById('hapusJudulTagihan');
+      if (label) {
+        label.textContent = tagihanJudul || 'tagihan terpilih';
+      }
+      openModalHapusTagihan();
+    }
+
+    function openModalHapusTagihan() {
+      const modal = document.getElementById('modalHapusTagihanBackdrop');
+      const content = document.getElementById('modalHapusTagihanContent');
+      if (modal && content) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          modal.classList.add('opacity-100', 'pointer-events-auto');
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalHapusTagihan() {
+      const modal = document.getElementById('modalHapusTagihanBackdrop');
+      const content = document.getElementById('modalHapusTagihanContent');
+      if (modal && content) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    function openModalKelolaTagihan() {
+      const modal = document.getElementById('modalKelolaTagihanBackdrop');
+      const content = document.getElementById('modalKelolaTagihanContent');
+      if (modal && content) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modal.classList.remove('opacity-0', 'pointer-events-none');
+          modal.classList.add('opacity-100', 'pointer-events-auto');
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModalKelolaTagihan() {
+      const modal = document.getElementById('modalKelolaTagihanBackdrop');
+      const content = document.getElementById('modalKelolaTagihanContent');
+      if (modal && content) {
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }, 200);
+      }
+    }
+
+    // Keyboard shortcut (Escape to close modals)
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeModalSiswa();
+        closeModalCatatBayar();
+        closeModalHapusSiswa();
+        closeModalDetailSiswa();
+        closeModalQris();
+        closeModalRiwayatKasMasuk();
+        closeModalEditSiswa();
+        closeModalHapusTagihan();
+        closeModalKelolaTagihan();
+        closeModalUbahPasswordPortal();
+      }
+    });
+  </script>
+
+</body>
+
+</html>
